@@ -1,7 +1,11 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import Boolean, DateTime, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 from app.database import Base
+
+
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc)
 
 
 class SchedulerRun(Base):
@@ -9,7 +13,7 @@ class SchedulerRun(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     run_id: Mapped[str] = mapped_column(String(36), unique=True, nullable=False)
-    started_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+    started_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=_utcnow)
     finished_at: Mapped[datetime | None] = mapped_column(DateTime)
     dry_run: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     total_checked: Mapped[int] = mapped_column(Integer, nullable=False, default=0)

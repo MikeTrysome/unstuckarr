@@ -1,6 +1,7 @@
 from datetime import datetime
+from enum import Enum
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.auth import require_auth
@@ -10,6 +11,9 @@ from app.models.event import CleanupEvent
 from app.schemas.event import EventListOut, EventOut
 
 router = APIRouter(tags=["events"], dependencies=[Depends(require_auth)])
+
+_VALID_INSTANCES = {"Sonarr", "Sonarr-4K", "Radarr", "Radarr-4K"}
+_VALID_ACTIONS = {"removed", "dry_run", "skipped", "error"}
 
 
 @router.get("/events", response_model=EventListOut)
@@ -22,6 +26,11 @@ def list_events(
     page_size: int = Query(50, ge=1, le=200),
     db: Session = Depends(get_db),
 ):
+    if instance and instance not in _VALID_INSTANCES:
+        raise HTTPException(status_code=400, detail=f"Invalid instance. Valid: {sorted(_VALID_INSTANCES)}")
+    if action and action not in _VALID_ACTIONS:
+        raise HTTPException(status_code=400, detail=f"Invalid action. Valid: {sorted(_VALID_ACTIONS)}")
+
     q = db.query(CleanupEvent)
     if instance:
         q = q.filter(CleanupEvent.instance_name == instance)

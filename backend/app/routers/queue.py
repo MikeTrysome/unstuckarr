@@ -1,5 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 
+_VALID_INSTANCES = {"Sonarr", "Sonarr-4K", "Radarr", "Radarr-4K"}
+
 from app.adapters.rdt_adapter import RdtAdapter
 from app.auth import require_auth
 from app.config import get_settings
@@ -22,6 +24,9 @@ def _get_detection_config() -> DetectionConfig:
 
 @router.get("/queue", response_model=list[StuckItemOut])
 def get_stuck_queue(instance: str | None = Query(None, description="Filter by instance name")):
+    if instance and instance not in _VALID_INSTANCES:
+        raise HTTPException(status_code=400, detail=f"Invalid instance. Valid: {sorted(_VALID_INSTANCES)}")
+
     settings = get_settings()
 
     rdt_index: dict = {}
@@ -46,8 +51,8 @@ def get_stuck_queue(instance: str | None = Query(None, description="Filter by in
         arr = ArrService(inst)
         try:
             records = arr.fetch_queue()
-        except Exception as exc:
-            raise HTTPException(status_code=502, detail=str(exc))
+        except Exception:
+            raise HTTPException(status_code=502, detail=f"Failed to fetch queue for {inst.name}")
 
         stuck = find_stuck_items(records, rdt_index, use_rdt, detection_cfg)
         for s in stuck:

@@ -12,6 +12,23 @@ export function clearToken(): void {
   localStorage.removeItem(TOKEN_KEY)
 }
 
+function isTokenExpired(token: string): boolean {
+  try {
+    const parts = token.split('.')
+    if (parts.length !== 3) return true
+    const payload = JSON.parse(atob(parts[1]))
+    return typeof payload.exp === 'number' && Date.now() >= payload.exp * 1000
+  } catch {
+    return true
+  }
+}
+
 export function isAuthenticated(): boolean {
-  return !!getToken()
+  const token = getToken()
+  if (!token) return false
+  if (isTokenExpired(token)) {
+    clearToken()
+    return false
+  }
+  return true
 }

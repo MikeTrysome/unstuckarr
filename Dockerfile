@@ -23,7 +23,10 @@ COPY --from=frontend-build /build/dist/ ./static/
 ENV ARRSM_DATA_DIR=/data
 ENV STATIC_DIR=/app/static
 
-RUN useradd -m -u 1000 unstackarr && chown -R unstackarr:unstackarr /app
+RUN useradd -m -u 1000 unstackarr \
+    && mkdir -p /data \
+    && chmod 700 /data \
+    && chown -R unstackarr:unstackarr /app /data
 USER unstackarr
 
 VOLUME ["/data"]
