@@ -1,8 +1,7 @@
 services:
-  backend:
-    build:
-      context: .
-      dockerfile: Dockerfile
+  unstuckarr:
+    image: dockersftw/unstuckarr:latest   # use pre-built image from Docker Hub
+    # build: .                            # uncomment to build locally instead
     ports:
       - "7676:7676"
     volumes:

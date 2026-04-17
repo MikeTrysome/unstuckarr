@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>unstuckarr</Name>
+  <Repository>dockersftw/unstuckarr:latest</Repository>
+  <Registry>https://hub.docker.com/r/dockersftw/unstuckarr</Registry>
+  <Network>bridge</Network>
+  <Privileged>false</Privileged>
+  <Support/>
+  <Project>https://github.com/MikeTrysome/unstuckarr</Project>
+  <Overview>Unstuckarr automatically detects and removes stuck downloads from your Sonarr/Radarr queue when using RDT-client with Real-Debrid. Features a web UI with live logs, history, and configurable detection thresholds.</Overview>
+  <Category>Downloaders: Tools:</Category>
+  <WebUI>http://[IP]:[PORT:7676]</WebUI>
+  <TemplateURL>https://raw.githubusercontent.com/MikeTrysome/unstuckarr/main/unraid-template.xml</TemplateURL>
+  <Icon>https://raw.githubusercontent.com/MikeTrysome/unstuckarr/main/frontend/public/favicon.svg</Icon>
+  <ExtraParams>--restart=unless-stopped</ExtraParams>
+  <DateInstalled/>
+  <DonateText/>
+  <DonateLink/>
+
+  <Config Name="Web UI Port" Target="7676" Default="7676" Mode="tcp" Description="Port for the Unstuckarr web interface." Type="Port" Display="always" Required="true" Mask="false">7676</Config>
+
+  <Config Name="Data Path" Target="/data" Default="/mnt/user/appdata/unstuckarr" Mode="rw" Description="Persistent storage for the SQLite database." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/unstuckarr</Config>
+
+  <Config Name="Password" Target="ARRSM_PASSWORD" Default="" Description="Initial login password (min. 12 characters). Only used on first start — stored as a bcrypt hash afterwards." Type="Variable" Display="always" Required="true" Mask="true"></Config>
+
+  <Config Name="Sonarr Host" Target="ARRSM_SONARR_HOST" Default="192.168.1.x" Description="Hostname or IP of your Sonarr instance." Type="Variable" Display="always" Required="false" Mask="false"></Config>
+  <Config Name="Sonarr Port" Target="ARRSM_SONARR_PORT" Default="8989" Description="Port of your Sonarr instance." Type="Variable" Display="always" Required="false" Mask="false">8989</Config>
+  <Config Name="Sonarr API Key" Target="ARRSM_SONARR_API_KEY" Default="" Description="Sonarr API key (Settings → General)." Type="Variable" Display="always" Required="false" Mask="true"></Config>
+
+  <Config Name="Sonarr 4K Host" Target="ARRSM_SONARR4K_HOST" Default="192.168.1.x" Description="Hostname or IP of your Sonarr 4K instance." Type="Variable" Display="always" Required="false" Mask="false"></Config>
+  <Config Name="Sonarr 4K Port" Target="ARRSM_SONARR4K_PORT" Default="8990" Description="Port of your Sonarr 4K instance." Type="Variable" Display="always" Required="false" Mask="false">8990</Config>
+  <Config Name="Sonarr 4K API Key" Target="ARRSM_SONARR4K_API_KEY" Default="" Description="Sonarr 4K API key." Type="Variable" Display="always" Required="false" Mask="true"></Config>
+
+  <Config Name="Radarr Host" Target="ARRSM_RADARR_HOST" Default="192.168.1.x" Description="Hostname or IP of your Radarr instance." Type="Variable" Display="always" Required="false" Mask="false"></Config>
+  <Config Name="Radarr Port" Target="ARRSM_RADARR_PORT" Default="7878" Description="Port of your Radarr instance." Type="Variable" Display="always" Required="false" Mask="false">7878</Config>
+  <Config Name="Radarr API Key" Target="ARRSM_RADARR_API_KEY" Default="" Description="Radarr API key (Settings → General)." Type="Variable" Display="always" Required="false" Mask="true"></Config>
+
+  <Config Name="Radarr 4K Host" Target="ARRSM_RADARR4K_HOST" Default="192.168.1.x" Description="Hostname or IP of your Radarr 4K instance." Type="Variable" Display="always" Required="false" Mask="false"></Config>
+  <Config Name="Radarr 4K Port" Target="ARRSM_RADARR4K_PORT" Default="7879" Description="Port of your Radarr 4K instance." Type="Variable" Display="always" Required="false" Mask="false">7879</Config>
+  <Config Name="Radarr 4K API Key" Target="ARRSM_RADARR4K_API_KEY" Default="" Description="Radarr 4K API key." Type="Variable" Display="always" Required="false" Mask="true"></Config>
+
+  <Config Name="RDT-client Host" Target="ARRSM_RDT_HOST" Default="192.168.1.x" Description="Hostname or IP of your RDT-client instance." Type="Variable" Display="always" Required="false" Mask="false"></Config>
+  <Config Name="RDT-client Port" Target="ARRSM_RDT_PORT" Default="6500" Description="Port of your RDT-client instance." Type="Variable" Display="always" Required="false" Mask="false">6500</Config>
+  <Config Name="RDT-client Username" Target="ARRSM_RDT_USERNAME" Default="" Description="RDT-client login username." Type="Variable" Display="always" Required="false" Mask="false"></Config>
+  <Config Name="RDT-client Password" Target="ARRSM_RDT_PASSWORD" Default="" Description="RDT-client login password." Type="Variable" Display="always" Required="false" Mask="true"></Config>
+
+  <Config Name="Check Interval (minutes)" Target="ARRSM_INTERVAL_MINUTES" Default="10" Description="How often to check for stuck downloads." Type="Variable" Display="always" Required="false" Mask="false">10</Config>
+
+  <Config Name="Timezone" Target="TZ" Default="Europe/Amsterdam" Description="Your timezone (e.g. Europe/Amsterdam, America/New_York)." Type="Variable" Display="always" Required="false" Mask="false">Europe/Amsterdam</Config>
+</Container>
