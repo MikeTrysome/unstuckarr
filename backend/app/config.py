@@ -89,4 +89,4 @@ def get_settings() -> Settings:
 def get_db_path() -> str:
     data_dir = get_settings().data_dir
     os.makedirs(data_dir, exist_ok=True)
-    return os.path.join(data_dir, "unstackarr.db")
+    return os.path.join(data_dir, "unstuckarr.db")

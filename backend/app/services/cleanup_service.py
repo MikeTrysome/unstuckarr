@@ -66,7 +66,7 @@ def run_cleanup(dry_run: bool | None = None, triggered_by: str = "scheduler") ->
         db.add(run)
         db.commit()
 
-        _log("INFO", f"{'[DRY-RUN] ' if dry_run else ''}Cleanup gestart (run_id={run_id})", run_id=run_id)
+        _log("INFO", f"{'[DRY-RUN] ' if dry_run else ''}Cleanup started (run_id={run_id})", run_id=run_id)
 
         detection_cfg = _build_detection_config(db)
         total_checked = 0
@@ -77,14 +77,14 @@ def run_cleanup(dry_run: bool | None = None, triggered_by: str = "scheduler") ->
         rdt_index: dict = {}
         use_rdt = settings.rdt_enabled
         if use_rdt:
-            _log("INFO", "RDT-client torrents ophalen...", run_id=run_id)
+            _log("INFO", "Fetching RDT-client torrents...", run_id=run_id)
             try:
                 adapter = RdtAdapter()
                 rdt_torrents = adapter.get_torrents()
                 rdt_index = adapter.build_hash_index(rdt_torrents)
-                _log("INFO", f"{len(rdt_torrents)} torrents opgehaald, {len(rdt_index)} geïndexeerd", run_id=run_id)
+                _log("INFO", f"{len(rdt_torrents)} torrents fetched, {len(rdt_index)} indexed", run_id=run_id)
             except Exception as exc:
-                _log("WARN", f"RDT-client ophalen mislukt: {exc} — cross-check overgeslagen", run_id=run_id)
+                _log("WARN", f"RDT-client fetch failed: {exc} — cross-check skipped", run_id=run_id)
                 use_rdt = False
 
         for instance in settings.get_arr_instances():
@@ -97,7 +97,7 @@ def run_cleanup(dry_run: bool | None = None, triggered_by: str = "scheduler") ->
             try:
                 records = arr.fetch_queue()
             except Exception as exc:
-                _log("ERROR", f"Queue ophalen mislukt: {exc}", run_id=run_id)
+                _log("ERROR", f"Queue fetch failed: {exc}", run_id=run_id)
                 continue
 
             total_checked += len(records)
@@ -107,10 +107,10 @@ def run_cleanup(dry_run: bool | None = None, triggered_by: str = "scheduler") ->
             total_stuck += len(stuck_items)
 
             if not stuck_items:
-                _log("INFO", "Geen vastgelopen items gevonden.", run_id=run_id)
+                _log("INFO", "No stuck items found.", run_id=run_id)
                 continue
 
-            _log("INFO", f"{len(stuck_items)} vastgelopen item(s) gevonden", run_id=run_id)
+            _log("INFO", f"{len(stuck_items)} stuck item(s) found", run_id=run_id)
 
             for stuck in stuck_items:
                 arr_item = stuck.arr_item
@@ -120,7 +120,7 @@ def run_cleanup(dry_run: bool | None = None, triggered_by: str = "scheduler") ->
 
                 _log(
                     "INFO",
-                    f"→ '{title[:60]}' | id={item_id} | hash={hash_}... | fout={stuck.error_type!r}",
+                    f"→ '{title[:60]}' | id={item_id} | hash={hash_}... | error={stuck.error_type!r}",
                     run_id=run_id,
                 )
 
@@ -131,9 +131,9 @@ def run_cleanup(dry_run: bool | None = None, triggered_by: str = "scheduler") ->
                     try:
                         arr.delete_queue_item(item_id)
                         total_removed += 1
-                        _log("INFO", f"Verwijderd: {instance.name} item {item_id}", run_id=run_id)
+                        _log("INFO", f"Removed: {instance.name} item {item_id}", run_id=run_id)
                     except Exception as exc:
-                        _log("ERROR", f"Verwijderen mislukt: {exc}", run_id=run_id)
+                        _log("ERROR", f"Remove failed: {exc}", run_id=run_id)
                         action = "error"
                 elif dry_run:
                     total_removed += 1  # Count for dry-run reporting
@@ -163,8 +163,8 @@ def run_cleanup(dry_run: bool | None = None, triggered_by: str = "scheduler") ->
         db.commit()
 
         summary = (
-            f"{'DRY-RUN ' if dry_run else ''}Voltooid — "
-            f"{total_stuck} stuck gevonden, {total_removed} verwijderd"
+            f"{'DRY-RUN ' if dry_run else ''}Completed — "
+            f"{total_stuck} stuck found, {total_removed} removed"
         )
         _log("INFO", summary, run_id=run_id)
         return run_id
@@ -179,7 +179,7 @@ def run_cleanup(dry_run: bool | None = None, triggered_by: str = "scheduler") ->
                 db.commit()
         except Exception:
             pass
-        _log("ERROR", f"Cleanup fout: {exc}", run_id=run_id)
+        _log("ERROR", f"Cleanup error: {exc}", run_id=run_id)
         raise
 
     finally:

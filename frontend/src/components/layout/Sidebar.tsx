@@ -17,7 +17,7 @@ export function Sidebar() {
           <div className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center">
             <Activity size={14} className="text-white" />
           </div>
-          <span className="font-semibold text-white text-sm tracking-wide">Unstackarr</span>
+          <span className="font-semibold text-white text-sm tracking-wide">Unstuckarr</span>
         </div>
       </div>
 

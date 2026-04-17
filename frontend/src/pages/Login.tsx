@@ -19,7 +19,7 @@ export default function Login() {
       setToken(token)
       navigate('/')
     } catch {
-      setError('Ongeldig wachtwoord')
+      setError('Invalid password')
     } finally {
       setLoading(false)
     }
@@ -32,17 +32,17 @@ export default function Login() {
           <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center">
             <Activity size={18} className="text-white" />
           </div>
-          <span className="text-xl font-semibold text-white">Unstackarr</span>
+          <span className="text-xl font-semibold text-white">Unstuckarr</span>
         </div>
 
         <form
           onSubmit={submit}
           className="bg-[#1a1d27] rounded-2xl border border-[#2a2d3a] p-6 space-y-4"
         >
-          <h1 className="text-base font-medium text-white">Inloggen</h1>
+          <h1 className="text-base font-medium text-white">Sign in</h1>
 
           <div>
-            <label className="block text-sm text-slate-400 mb-1.5">Wachtwoord</label>
+            <label className="block text-sm text-slate-400 mb-1.5">Password</label>
             <input
               type="password"
               value={password}
@@ -60,7 +60,7 @@ export default function Login() {
             disabled={loading || !password}
             className="w-full py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-colors disabled:opacity-50"
           >
-            {loading ? 'Bezig...' : 'Inloggen'}
+            {loading ? 'Signing in...' : 'Sign in'}
           </button>
         </form>
       </div>

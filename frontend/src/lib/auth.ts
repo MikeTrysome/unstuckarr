@@ -1,4 +1,4 @@
-const TOKEN_KEY = 'unstackarr_token'
+const TOKEN_KEY = 'unstuckarr_token'
 
 export function getToken(): string | null {
   return localStorage.getItem(TOKEN_KEY)

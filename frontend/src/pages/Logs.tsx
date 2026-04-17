@@ -16,18 +16,18 @@ export default function Logs() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-white">Live Logs</h1>
-          <p className="text-sm text-slate-400 mt-0.5">Real-time log stream van de cleanup service</p>
+          <p className="text-sm text-slate-400 mt-0.5">Real-time log stream from the cleanup service</p>
         </div>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5">
             <span className={`w-2 h-2 rounded-full ${connected ? 'bg-green-500' : 'bg-red-500'}`} />
-            <span className="text-xs text-slate-400">{connected ? 'Verbonden' : 'Verbroken'}</span>
+            <span className="text-xs text-slate-400">{connected ? 'Connected' : 'Disconnected'}</span>
           </div>
           <button
             onClick={clear}
             className="px-3 py-1.5 text-xs rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 transition-colors"
           >
-            Wissen
+            Clear
           </button>
         </div>
       </div>
@@ -36,7 +36,7 @@ export default function Logs() {
         <div className="flex-1 overflow-y-auto p-4 font-mono text-xs space-y-0.5">
           {messages.length === 0 ? (
             <p className="text-slate-500 text-center mt-8">
-              Wachten op log berichten...
+              Waiting for log messages...
             </p>
           ) : (
             messages.map((msg, i) => (

@@ -38,7 +38,7 @@ export default function Events() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-white">Events</h1>
-          <p className="text-sm text-slate-400 mt-0.5">Historie van cleanup acties</p>
+          <p className="text-sm text-slate-400 mt-0.5">History of cleanup actions</p>
         </div>
         <div className="flex gap-2">
           <select
@@ -46,7 +46,7 @@ export default function Events() {
             onChange={(e) => { setFilterInstance(e.target.value); setPage(1) }}
             className="px-3 py-1.5 text-sm bg-[#1a1d27] border border-[#2a2d3a] rounded-lg text-slate-300"
           >
-            <option value="">Alle instanties</option>
+            <option value="">All instances</option>
             {INSTANCES.map((i) => <option key={i} value={i}>{i}</option>)}
           </select>
           <select
@@ -54,7 +54,7 @@ export default function Events() {
             onChange={(e) => { setFilterAction(e.target.value); setPage(1) }}
             className="px-3 py-1.5 text-sm bg-[#1a1d27] border border-[#2a2d3a] rounded-lg text-slate-300"
           >
-            <option value="">Alle acties</option>
+            <option value="">All actions</option>
             {ACTIONS.map((a) => <option key={a} value={a}>{a}</option>)}
           </select>
         </div>
@@ -62,13 +62,13 @@ export default function Events() {
 
       <div className="bg-[#1a1d27] rounded-xl border border-[#2a2d3a] overflow-hidden">
         {!data || data.items.length === 0 ? (
-          <div className="p-12 text-center text-slate-400 text-sm">Geen events gevonden</div>
+          <div className="p-12 text-center text-slate-400 text-sm">No events found</div>
         ) : (
           <>
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-[#2a2d3a]">
-                  {['Tijdstip', 'Titel', 'Instantie', 'Fouttype', 'Actie', 'Run'].map((h) => (
+                  {['Time', 'Title', 'Instance', 'Error type', 'Action', 'Run'].map((h) => (
                     <th key={h} className="px-4 py-2.5 text-left text-xs text-slate-500 font-medium">{h}</th>
                   ))}
                 </tr>
@@ -79,7 +79,7 @@ export default function Events() {
                   return (
                     <tr key={ev.id} className="border-b border-[#2a2d3a]/50 hover:bg-white/2">
                       <td className="px-4 py-2.5 text-xs text-slate-500 whitespace-nowrap">
-                        {new Date(ev.timestamp).toLocaleString('nl')}
+                        {new Date(ev.timestamp).toLocaleString()}
                       </td>
                       <td className="px-4 py-2.5 text-slate-200 max-w-xs truncate" title={ev.title}>
                         {ev.title}
@@ -101,14 +101,14 @@ export default function Events() {
             </table>
 
             <div className="px-4 py-3 border-t border-[#2a2d3a] flex items-center justify-between">
-              <span className="text-xs text-slate-500">{data.total} events totaal</span>
+              <span className="text-xs text-slate-500">{data.total} events total</span>
               <div className="flex gap-2">
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1}
                   className="px-2 py-1 text-xs rounded bg-white/5 hover:bg-white/10 text-slate-300 disabled:opacity-30"
                 >
-                  ← Vorige
+                  ← Previous
                 </button>
                 <span className="px-2 py-1 text-xs text-slate-400">{page} / {totalPages}</span>
                 <button
@@ -116,7 +116,7 @@ export default function Events() {
                   disabled={page >= totalPages}
                   className="px-2 py-1 text-xs rounded bg-white/5 hover:bg-white/10 text-slate-300 disabled:opacity-30"
                 >
-                  Volgende →
+                  Next →
                 </button>
               </div>
             </div>

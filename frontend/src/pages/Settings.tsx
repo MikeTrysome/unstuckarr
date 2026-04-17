@@ -55,7 +55,7 @@ export default function Settings() {
     setTesting(false)
   }
 
-  if (!config) return <p className="text-slate-500 text-sm">Laden...</p>
+  if (!config) return <p className="text-slate-500 text-sm">Loading...</p>
 
   const { env, db } = config
 
@@ -63,16 +63,16 @@ export default function Settings() {
     <div className="space-y-5 max-w-2xl">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-white">Instellingen</h1>
+          <h1 className="text-xl font-semibold text-white">Settings</h1>
           <p className="text-sm text-slate-400 mt-0.5">
-            Secrets worden beheerd via environment variables.
-            Drempelwaarden en scheduler zijn hier aanpasbaar.
+            Secrets are managed via environment variables.
+            Thresholds and scheduler settings are configurable here.
           </p>
         </div>
       </div>
 
       {/* Connection status */}
-      <Section title="Verbindingen (env vars)">
+      <Section title="Connections (env vars)">
         <div className="py-1">
           {[
             { label: 'Sonarr', host: env.sonarr_host, port: env.sonarr_port, key: env.sonarr_api_key_set },
@@ -98,7 +98,7 @@ export default function Settings() {
               disabled={testing}
               className="px-4 py-2 text-sm rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 transition-colors disabled:opacity-50"
             >
-              {testing ? 'Testen...' : 'Verbindingen testen'}
+              {testing ? 'Testing...' : 'Test connections'}
             </button>
           </div>
         </div>
@@ -107,9 +107,9 @@ export default function Settings() {
       {/* Scheduler */}
       <Section title="Scheduler">
         <div className="py-1">
-          <Row label="Interval (minuten)" value={`${env.interval_minutes} (env var)`} />
+          <Row label="Interval (minutes)" value={`${env.interval_minutes} (env var)`} />
           <div className="flex items-center justify-between py-2.5 border-b border-[#2a2d3a]">
-            <span className="text-sm text-slate-400">Scheduler ingeschakeld</span>
+            <span className="text-sm text-slate-400">Scheduler enabled</span>
             <input
               type="checkbox"
               checked={draft.scheduler_enabled ?? db.scheduler_enabled}
@@ -118,7 +118,7 @@ export default function Settings() {
             />
           </div>
           <div className="flex items-center justify-between py-2.5">
-            <span className="text-sm text-slate-400">Dry-run modus</span>
+            <span className="text-sm text-slate-400">Dry run mode</span>
             <input
               type="checkbox"
               checked={draft.scheduler_dry_run ?? db.scheduler_dry_run}
@@ -130,12 +130,12 @@ export default function Settings() {
       </Section>
 
       {/* Detection thresholds */}
-      <Section title="Detectie drempelwaarden">
+      <Section title="Detection thresholds">
         <div className="py-1 space-y-0">
           {[
-            { key: 'detection_infringing_min_age_minutes' as keyof DbConfig, label: 'Infringing file — min. leeftijd (min)', default: db.detection_infringing_min_age_minutes },
-            { key: 'detection_canceled_min_age_minutes' as keyof DbConfig, label: 'Task canceled — min. leeftijd (min)', default: db.detection_canceled_min_age_minutes },
-            { key: 'detection_min_retry_count' as keyof DbConfig, label: 'Min. aantal retries (RDT)', default: db.detection_min_retry_count },
+            { key: 'detection_infringing_min_age_minutes' as keyof DbConfig, label: 'Infringing file — min. age (min)', default: db.detection_infringing_min_age_minutes },
+            { key: 'detection_canceled_min_age_minutes' as keyof DbConfig, label: 'Task canceled — min. age (min)', default: db.detection_canceled_min_age_minutes },
+            { key: 'detection_min_retry_count' as keyof DbConfig, label: 'Min. retry count (RDT)', default: db.detection_min_retry_count },
           ].map(({ key, label, default: def }) => (
             <div key={key} className="flex items-center justify-between py-2.5 border-b border-[#2a2d3a] last:border-0">
               <span className="text-sm text-slate-400">{label}</span>
@@ -152,7 +152,7 @@ export default function Settings() {
       </Section>
 
       {/* Notifications */}
-      <Section title="Notificaties (Apprise URLs)">
+      <Section title="Notifications (Apprise URLs)">
         <div className="py-3">
           <textarea
             value={(draft.notifications_apprise_urls ?? db.notifications_apprise_urls).join('\n')}
@@ -166,7 +166,7 @@ export default function Settings() {
             rows={4}
             className="w-full px-3 py-2 text-sm font-mono bg-[#0f1117] border border-[#2a2d3a] rounded-lg text-slate-200 focus:outline-none focus:border-indigo-500 resize-none"
           />
-          <p className="text-xs text-slate-500 mt-1">Één URL per regel. Ondersteunt alle Apprise-services (Discord, Telegram, Ntfy, etc.)</p>
+          <p className="text-xs text-slate-500 mt-1">One URL per line. Supports all Apprise services (Discord, Telegram, Ntfy, etc.)</p>
         </div>
       </Section>
 
@@ -175,7 +175,7 @@ export default function Settings() {
           onClick={save}
           className="px-5 py-2 text-sm rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition-colors font-medium"
         >
-          {saved ? '✓ Opgeslagen' : 'Opslaan'}
+          {saved ? '✓ Saved' : 'Save'}
         </button>
       </div>
     </div>

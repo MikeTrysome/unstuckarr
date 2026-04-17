@@ -8,7 +8,7 @@ const ERROR_LABELS: Record<string, { label: string; color: string }> = {
   infringing_file: { label: 'Infringing file', color: 'text-red-400 bg-red-500/10 border-red-500/20' },
   task_canceled: { label: 'Task canceled', color: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },
   arr_only: { label: 'ARR-only', color: 'text-slate-400 bg-white/5 border-white/10' },
-  other: { label: 'Overig', color: 'text-slate-400 bg-white/5 border-white/10' },
+  other: { label: 'Other', color: 'text-slate-400 bg-white/5 border-white/10' },
 }
 
 const INSTANCES = ['Sonarr', 'Sonarr-4K', 'Radarr', 'Radarr-4K']
@@ -25,7 +25,7 @@ export default function Queue() {
       setItems(await api.queue.getStuck(filter || undefined))
       setError(null)
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Fout')
+      setError(e instanceof Error ? e.message : 'Error')
     } finally {
       setLoading(false)
     }
@@ -47,7 +47,7 @@ export default function Queue() {
         <div>
           <h1 className="text-xl font-semibold text-white">Queue</h1>
           <p className="text-sm text-slate-400 mt-0.5">
-            Live overzicht van vastgelopen downloads
+            Live overview of stuck downloads
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -56,7 +56,7 @@ export default function Queue() {
             onChange={(e) => setFilter(e.target.value)}
             className="px-3 py-1.5 text-sm bg-[#1a1d27] border border-[#2a2d3a] rounded-lg text-slate-300"
           >
-            <option value="">Alle instanties</option>
+            <option value="">All instances</option>
             {INSTANCES.map((i) => <option key={i} value={i}>{i}</option>)}
           </select>
           <button
@@ -64,14 +64,14 @@ export default function Queue() {
             disabled={running}
             className="px-3 py-1.5 text-sm rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 transition-colors disabled:opacity-50"
           >
-            Dry-run
+            Dry run
           </button>
           <button
             onClick={() => triggerRun(false)}
             disabled={running}
             className="px-3 py-1.5 text-sm rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition-colors disabled:opacity-50"
           >
-            {running ? 'Bezig...' : 'Nu uitvoeren'}
+            {running ? 'Running...' : 'Run now'}
           </button>
         </div>
       </div>
@@ -81,22 +81,22 @@ export default function Queue() {
       {loading ? (
         <div className="flex items-center gap-2 text-slate-400 text-sm">
           <RefreshCw size={14} className="animate-spin" />
-          Laden...
+          Loading...
         </div>
       ) : filtered.length === 0 ? (
         <div className="bg-[#1a1d27] rounded-xl border border-[#2a2d3a] p-12 text-center">
-          <p className="text-slate-400 text-sm">Geen vastgelopen downloads gevonden</p>
+          <p className="text-slate-400 text-sm">No stuck downloads found</p>
         </div>
       ) : (
         <div className="bg-[#1a1d27] rounded-xl border border-[#2a2d3a] overflow-hidden">
           <div className="px-4 py-3 border-b border-[#2a2d3a] flex items-center gap-2">
             <AlertTriangle size={14} className="text-amber-400" />
-            <span className="text-sm text-slate-300">{filtered.length} vastgelopen item(s)</span>
+            <span className="text-sm text-slate-300">{filtered.length} stuck item(s)</span>
           </div>
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-[#2a2d3a]">
-                {['Titel', 'Instantie', 'Fouttype', 'Hash', 'Retries', 'Toegevoegd'].map((h) => (
+                {['Title', 'Instance', 'Error type', 'Hash', 'Retries', 'Added'].map((h) => (
                   <th key={h} className="px-4 py-2.5 text-left text-xs text-slate-500 font-medium">{h}</th>
                 ))}
               </tr>
@@ -120,7 +120,7 @@ export default function Queue() {
                     </td>
                     <td className="px-4 py-3 text-slate-400">{item.retry_count}</td>
                     <td className="px-4 py-3 text-slate-500 text-xs">
-                      {item.added_at ? new Date(item.added_at).toLocaleString('nl') : '—'}
+                      {item.added_at ? new Date(item.added_at).toLocaleString() : '—'}
                     </td>
                   </tr>
                 )

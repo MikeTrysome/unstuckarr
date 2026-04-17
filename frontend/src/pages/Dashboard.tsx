@@ -26,7 +26,7 @@ export default function Dashboard() {
       setData(await api.dashboard.get())
       setError(null)
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Fout bij laden')
+      setError(e instanceof Error ? e.message : 'Failed to load')
     }
   }
 
@@ -45,7 +45,7 @@ export default function Dashboard() {
   }
 
   if (error) return <p className="text-red-400 text-sm">{error}</p>
-  if (!data) return <p className="text-slate-500 text-sm">Laden...</p>
+  if (!data) return <p className="text-slate-500 text-sm">Loading...</p>
 
   const lastRun = data.last_run
   const statusIcon = lastRun.status === 'success'
@@ -59,7 +59,7 @@ export default function Dashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-white">Dashboard</h1>
-          <p className="text-sm text-slate-400 mt-0.5">Overzicht van de laatste 24 uur</p>
+          <p className="text-sm text-slate-400 mt-0.5">Overview of the last 24 hours</p>
         </div>
         <div className="flex gap-2">
           <button
@@ -67,36 +67,36 @@ export default function Dashboard() {
             disabled={running}
             className="px-4 py-2 text-sm rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 transition-colors disabled:opacity-50"
           >
-            Dry-run
+            Dry run
           </button>
           <button
             onClick={triggerExecute}
             disabled={running}
             className="px-4 py-2 text-sm rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition-colors disabled:opacity-50"
           >
-            {running ? 'Bezig...' : 'Nu uitvoeren'}
+            {running ? 'Running...' : 'Run now'}
           </button>
         </div>
       </div>
 
       {/* Stats row */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard label="Verwijderd (24u)" value={data.total_removed_24h} color="text-green-400" />
-        <StatCard label="Stuck gevonden (24u)" value={data.total_stuck_24h} color="text-amber-400" />
+        <StatCard label="Removed (24h)" value={data.total_removed_24h} color="text-green-400" />
+        <StatCard label="Stuck found (24h)" value={data.total_stuck_24h} color="text-amber-400" />
         <StatCard
-          label="Laatste run"
-          value={lastRun.started_at ? new Date(lastRun.started_at).toLocaleTimeString('nl') : '—'}
+          label="Last run"
+          value={lastRun.started_at ? new Date(lastRun.started_at).toLocaleTimeString() : '—'}
           sub={lastRun.status ?? undefined}
         />
         <StatCard
-          label="Volgende run"
-          value={data.next_run_at ? new Date(data.next_run_at).toLocaleTimeString('nl') : '—'}
+          label="Next run"
+          value={data.next_run_at ? new Date(data.next_run_at).toLocaleTimeString() : '—'}
         />
       </div>
 
       {/* Per instance */}
       <div>
-        <h2 className="text-sm font-medium text-slate-400 mb-3">Per instantie (24u)</h2>
+        <h2 className="text-sm font-medium text-slate-400 mb-3">Per instance (24h)</h2>
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           {INSTANCES.map((name) => {
             const inst = data.by_instance[name] ?? { removed: 0, dry_run: 0 }
@@ -105,11 +105,11 @@ export default function Dashboard() {
                 <p className="text-sm font-medium text-white">{name}</p>
                 <div className="mt-2 space-y-1">
                   <div className="flex justify-between text-xs">
-                    <span className="text-slate-400">Verwijderd</span>
+                    <span className="text-slate-400">Removed</span>
                     <span className="text-green-400 font-medium">{inst.removed}</span>
                   </div>
                   <div className="flex justify-between text-xs">
-                    <span className="text-slate-400">Dry-run</span>
+                    <span className="text-slate-400">Dry run</span>
                     <span className="text-amber-400 font-medium">{inst.dry_run}</span>
                   </div>
                 </div>
@@ -124,20 +124,20 @@ export default function Dashboard() {
         <div className="bg-[#1a1d27] rounded-xl border border-[#2a2d3a] p-5">
           <div className="flex items-center gap-2 mb-3">
             {statusIcon}
-            <h2 className="text-sm font-medium text-white">Laatste run</h2>
+            <h2 className="text-sm font-medium text-white">Last run</h2>
             {lastRun.dry_run && (
               <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                dry-run
+                dry run
               </span>
             )}
           </div>
           <div className="grid grid-cols-3 gap-4 text-sm">
             <div>
-              <p className="text-slate-400 text-xs">Stuck gevonden</p>
+              <p className="text-slate-400 text-xs">Stuck found</p>
               <p className="text-white font-medium">{lastRun.total_stuck ?? '—'}</p>
             </div>
             <div>
-              <p className="text-slate-400 text-xs">Verwijderd</p>
+              <p className="text-slate-400 text-xs">Removed</p>
               <p className="text-white font-medium">{lastRun.total_removed ?? '—'}</p>
             </div>
             <div>

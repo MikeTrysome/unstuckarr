@@ -68,7 +68,7 @@ async def lifespan(app: FastAPI):
     await sched.stop()
 
 
-app = FastAPI(title="Unstackarr", version="0.1.0", lifespan=lifespan)
+app = FastAPI(title="Unstuckarr", version="0.1.0", lifespan=lifespan)
 
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
