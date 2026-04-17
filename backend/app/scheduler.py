@@ -1,17 +1,21 @@
 from __future__ import annotations
 
 import asyncio
+from concurrent.futures import ThreadPoolExecutor
+
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 
 from app.config import get_settings
 
 _scheduler = AsyncIOScheduler()
+_executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="cleanup")
 
 
-def _run_cleanup_job():
+async def _run_cleanup_job():
     from app.services.cleanup_service import run_cleanup
-    run_cleanup(triggered_by="scheduler")
+    loop = asyncio.get_event_loop()
+    await loop.run_in_executor(_executor, run_cleanup, None, "scheduler")
 
 
 async def start():

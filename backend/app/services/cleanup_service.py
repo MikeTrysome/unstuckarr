@@ -5,8 +5,8 @@ Runs synchronously (called from APScheduler thread or a background executor).
 
 from __future__ import annotations
 
-import datetime
 import uuid
+from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 
@@ -19,6 +19,10 @@ from app.services import db_config
 from app.services.arr_service import ArrService
 from app.services.detection import DetectionConfig, find_stuck_items
 from app.services.log_broadcaster import broadcaster
+
+
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc)
 
 
 def _log(level: str, msg: str, run_id: str | None = None):
@@ -55,7 +59,7 @@ def run_cleanup(dry_run: bool | None = None, triggered_by: str = "scheduler") ->
 
         run = SchedulerRun(
             run_id=run_id,
-            started_at=datetime.datetime.utcnow(),
+            started_at=_utcnow(),
             dry_run=dry_run,
             status="running",
         )
@@ -135,7 +139,7 @@ def run_cleanup(dry_run: bool | None = None, triggered_by: str = "scheduler") ->
                     total_removed += 1  # Count for dry-run reporting
 
                 event = CleanupEvent(
-                    timestamp=datetime.datetime.utcnow(),
+                    timestamp=_utcnow(),
                     instance_name=instance.name,
                     arr_queue_id=item_id,
                     title=title,
@@ -151,7 +155,7 @@ def run_cleanup(dry_run: bool | None = None, triggered_by: str = "scheduler") ->
                 db.add(event)
                 db.commit()
 
-        run.finished_at = datetime.datetime.utcnow()
+        run.finished_at = _utcnow()
         run.total_checked = total_checked
         run.total_stuck = total_stuck
         run.total_removed = total_removed
@@ -169,7 +173,7 @@ def run_cleanup(dry_run: bool | None = None, triggered_by: str = "scheduler") ->
         try:
             run = db.get(SchedulerRun, run_id) or db.query(SchedulerRun).filter_by(run_id=run_id).first()
             if run:
-                run.finished_at = datetime.datetime.utcnow()
+                run.finished_at = _utcnow()
                 run.status = "error"
                 run.error_message = str(exc)
                 db.commit()
