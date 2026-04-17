@@ -1,8 +1,9 @@
 from datetime import datetime
-from pydantic import BaseModel
+
+from app.schemas import UtcModel
 
 
-class StuckItemOut(BaseModel):
+class StuckItemOut(UtcModel):
     arr_queue_id: int | None
     title: str
     instance_name: str
@@ -13,7 +14,7 @@ class StuckItemOut(BaseModel):
     retry_count: int
 
 
-class RunOut(BaseModel):
+class RunOut(UtcModel):
     run_id: str
     started_at: datetime
     finished_at: datetime | None
@@ -24,9 +25,7 @@ class RunOut(BaseModel):
     status: str
     error_message: str | None
 
-    model_config = {"from_attributes": True}
 
-
-class RunListOut(BaseModel):
+class RunListOut(UtcModel):
     items: list[RunOut]
     total: int

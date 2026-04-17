@@ -1,8 +1,9 @@
 from datetime import datetime
-from pydantic import BaseModel
+
+from app.schemas import UtcModel
 
 
-class EventOut(BaseModel):
+class EventOut(UtcModel):
     id: int
     timestamp: datetime
     instance_name: str
@@ -17,10 +18,8 @@ class EventOut(BaseModel):
     triggered_by: str
     run_id: str | None
 
-    model_config = {"from_attributes": True}
 
-
-class EventListOut(BaseModel):
+class EventListOut(UtcModel):
     items: list[EventOut]
     total: int
     page: int
