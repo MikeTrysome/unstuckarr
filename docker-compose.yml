@@ -1,0 +1,11 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "7676:7676"
+    volumes:
+      - ./data:/data
+    env_file: .env
+    restart: unless-stopped

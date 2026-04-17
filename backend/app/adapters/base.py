@@ -1,0 +1,28 @@
+from __future__ import annotations
+
+from abc import ABC, abstractmethod
+from datetime import datetime
+from pydantic import BaseModel
+
+
+class TorrentInfo(BaseModel):
+    hash: str
+    status: str
+    error: str | None = None
+    added_at: datetime | None = None
+    retry_count: int = 0
+    raw: dict = {}
+
+
+class DownloadClientAdapter(ABC):
+    @abstractmethod
+    def get_torrents(self) -> list[TorrentInfo]: ...
+
+    @abstractmethod
+    def has_permanent_error(self, torrent: TorrentInfo) -> tuple[bool, str]: ...
+
+    @abstractmethod
+    def build_hash_index(self, torrents: list[TorrentInfo]) -> dict[str, TorrentInfo]: ...
+
+    @abstractmethod
+    def health_check(self) -> bool: ...

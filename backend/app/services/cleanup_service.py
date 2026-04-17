@@ -1,0 +1,182 @@
+"""
+Orchestrator: ties together RDT adapter, ARR service, detection, and DB.
+Runs synchronously (called from APScheduler thread or a background executor).
+"""
+
+from __future__ import annotations
+
+import datetime
+import uuid
+
+from sqlalchemy.orm import Session
+
+from app.adapters.rdt_adapter import RdtAdapter
+from app.config import get_settings
+from app.database import SessionLocal
+from app.models.event import CleanupEvent
+from app.models.run import SchedulerRun
+from app.services import db_config
+from app.services.arr_service import ArrService
+from app.services.detection import DetectionConfig, find_stuck_items
+from app.services.log_broadcaster import broadcaster
+
+
+def _log(level: str, msg: str, run_id: str | None = None):
+    broadcaster.emit_sync(level, msg, run_id=run_id)
+
+
+def _build_detection_config(db: Session) -> DetectionConfig:
+    return DetectionConfig(
+        infringing_min_age_minutes=db_config.get(db, "detection.infringing_min_age_minutes"),
+        canceled_min_age_minutes=db_config.get(db, "detection.canceled_min_age_minutes"),
+        min_retry_count=db_config.get(db, "detection.min_retry_count"),
+    )
+
+
+def run_cleanup(dry_run: bool | None = None, triggered_by: str = "scheduler") -> str:
+    """
+    Execute one full cleanup run. Returns run_id.
+    This is a synchronous function — safe to call from a thread.
+    """
+    run_id = str(uuid.uuid4())
+    db = SessionLocal()
+
+    try:
+        settings = get_settings()
+
+        # Resolve dry_run: explicit arg > DB config
+        if dry_run is None:
+            dry_run = db_config.get(db, "scheduler.dry_run")
+
+        # Check if scheduler is globally disabled
+        if not db_config.get(db, "scheduler.enabled") and triggered_by == "scheduler":
+            _log("INFO", "Scheduler is disabled, skipping run.", run_id=run_id)
+            return run_id
+
+        run = SchedulerRun(
+            run_id=run_id,
+            started_at=datetime.datetime.utcnow(),
+            dry_run=dry_run,
+            status="running",
+        )
+        db.add(run)
+        db.commit()
+
+        _log("INFO", f"{'[DRY-RUN] ' if dry_run else ''}Cleanup gestart (run_id={run_id})", run_id=run_id)
+
+        detection_cfg = _build_detection_config(db)
+        total_checked = 0
+        total_stuck = 0
+        total_removed = 0
+
+        # Fetch RDT torrents once for all ARR instances
+        rdt_index: dict = {}
+        use_rdt = settings.rdt_enabled
+        if use_rdt:
+            _log("INFO", "RDT-client torrents ophalen...", run_id=run_id)
+            try:
+                adapter = RdtAdapter()
+                rdt_torrents = adapter.get_torrents()
+                rdt_index = adapter.build_hash_index(rdt_torrents)
+                _log("INFO", f"{len(rdt_torrents)} torrents opgehaald, {len(rdt_index)} geïndexeerd", run_id=run_id)
+            except Exception as exc:
+                _log("WARN", f"RDT-client ophalen mislukt: {exc} — cross-check overgeslagen", run_id=run_id)
+                use_rdt = False
+
+        for instance in settings.get_arr_instances():
+            if not instance.enabled:
+                continue
+
+            _log("INFO", f"--- {instance.name} ({instance.host}:{instance.port}) ---", run_id=run_id)
+            arr = ArrService(instance)
+
+            try:
+                records = arr.fetch_queue()
+            except Exception as exc:
+                _log("ERROR", f"Queue ophalen mislukt: {exc}", run_id=run_id)
+                continue
+
+            total_checked += len(records)
+            _log("INFO", f"{len(records)} items in queue", run_id=run_id)
+
+            stuck_items = find_stuck_items(records, rdt_index, use_rdt, detection_cfg)
+            total_stuck += len(stuck_items)
+
+            if not stuck_items:
+                _log("INFO", "Geen vastgelopen items gevonden.", run_id=run_id)
+                continue
+
+            _log("INFO", f"{len(stuck_items)} vastgelopen item(s) gevonden", run_id=run_id)
+
+            for stuck in stuck_items:
+                arr_item = stuck.arr_item
+                item_id = arr_item.get("id")
+                title = arr_item.get("title", "?")
+                hash_ = str(arr_item.get("downloadId", "?"))[:16]
+
+                _log(
+                    "INFO",
+                    f"→ '{title[:60]}' | id={item_id} | hash={hash_}... | fout={stuck.error_type!r}",
+                    run_id=run_id,
+                )
+
+                action = "dry_run" if dry_run else "removed"
+                search_type = None
+
+                if not dry_run and item_id:
+                    try:
+                        arr.delete_queue_item(item_id)
+                        total_removed += 1
+                        _log("INFO", f"Verwijderd: {instance.name} item {item_id}", run_id=run_id)
+                    except Exception as exc:
+                        _log("ERROR", f"Verwijderen mislukt: {exc}", run_id=run_id)
+                        action = "error"
+                elif dry_run:
+                    total_removed += 1  # Count for dry-run reporting
+
+                event = CleanupEvent(
+                    timestamp=datetime.datetime.utcnow(),
+                    instance_name=instance.name,
+                    arr_queue_id=item_id,
+                    title=title,
+                    download_hash=(arr_item.get("downloadId") or "").lower() or None,
+                    error_type=stuck.error_type,
+                    error_message=stuck.error_message,
+                    action=action,
+                    search_type=search_type,
+                    dry_run=dry_run,
+                    triggered_by=triggered_by,
+                    run_id=run_id,
+                )
+                db.add(event)
+                db.commit()
+
+        run.finished_at = datetime.datetime.utcnow()
+        run.total_checked = total_checked
+        run.total_stuck = total_stuck
+        run.total_removed = total_removed
+        run.status = "success"
+        db.commit()
+
+        summary = (
+            f"{'DRY-RUN ' if dry_run else ''}Voltooid — "
+            f"{total_stuck} stuck gevonden, {total_removed} verwijderd"
+        )
+        _log("INFO", summary, run_id=run_id)
+        return run_id
+
+    except Exception as exc:
+        try:
+            run = db.get(SchedulerRun, run_id) or db.query(SchedulerRun).filter_by(run_id=run_id).first()
+            if run:
+                run.finished_at = datetime.datetime.utcnow()
+                run.status = "error"
+                run.error_message = str(exc)
+                db.commit()
+        except Exception:
+            pass
+        _log("ERROR", f"Cleanup fout: {exc}", run_id=run_id)
+        raise
+
+    finally:
+        db.close()
