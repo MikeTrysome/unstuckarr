@@ -48,9 +48,9 @@ export default function Dashboard() {
   if (!data) return <p className="text-slate-500 text-sm">Loading...</p>
 
   const lastRun = data.last_run
-  const statusIcon = lastRun.status === 'success'
+  const statusIcon = lastRun?.status === 'success'
     ? <CheckCircle size={14} className="text-green-400" />
-    : lastRun.status === 'error'
+    : lastRun?.status === 'error'
     ? <XCircle size={14} className="text-red-400" />
     : <RefreshCw size={14} className="text-amber-400" />
 
@@ -85,12 +85,12 @@ export default function Dashboard() {
         <StatCard label="Stuck found (24h)" value={data.total_stuck_24h} color="text-amber-400" />
         <StatCard
           label="Last run"
-          value={lastRun.started_at ? new Date(lastRun.started_at).toLocaleTimeString() : '—'}
-          sub={lastRun.status ?? undefined}
+          value={lastRun?.started_at ? new Date(lastRun.started_at).toLocaleString() : '—'}
+          sub={lastRun?.status ?? undefined}
         />
         <StatCard
           label="Next run"
-          value={data.next_run_at ? new Date(data.next_run_at).toLocaleTimeString() : '—'}
+          value={data.next_run_at ? new Date(data.next_run_at).toLocaleString() : '—'}
         />
       </div>
 
@@ -120,12 +120,12 @@ export default function Dashboard() {
       </div>
 
       {/* Last run detail */}
-      {lastRun.run_id && (
+      {lastRun?.run_id && (
         <div className="bg-[#1a1d27] rounded-xl border border-[#2a2d3a] p-5">
           <div className="flex items-center gap-2 mb-3">
             {statusIcon}
             <h2 className="text-sm font-medium text-white">Last run</h2>
-            {lastRun.dry_run && (
+            {lastRun?.dry_run && (
               <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
                 dry run
               </span>

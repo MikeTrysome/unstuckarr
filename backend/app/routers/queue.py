@@ -54,6 +54,9 @@ def get_stuck_queue(
     for inst in db_config.get_arr_instances_from_db(db):
         if not inst.enabled:
             continue
+        if not inst.host:
+            # Instance not configured yet — skip silently
+            continue
         if instance and inst.name.lower() != instance.lower():
             continue
 
@@ -61,7 +64,8 @@ def get_stuck_queue(
         try:
             records = arr.fetch_queue()
         except Exception:
-            raise HTTPException(status_code=502, detail=f"Failed to fetch queue for {inst.name}")
+            # Single instance failure should not block other instances
+            continue
 
         stuck = find_stuck_items(records, rdt_index, use_rdt, detection_cfg)
         for s in stuck:

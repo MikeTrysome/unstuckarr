@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
@@ -14,7 +14,7 @@ router = APIRouter(tags=["dashboard"], dependencies=[Depends(require_auth)])
 
 @router.get("/dashboard")
 def get_dashboard(db: Session = Depends(get_db)):
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     since_24h = now - timedelta(hours=24)
 
     last_run = (
