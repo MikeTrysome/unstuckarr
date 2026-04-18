@@ -174,6 +174,12 @@ def run_cleanup(dry_run: bool | None = None, triggered_by: str = "scheduler") ->
         return run_id
 
     except Exception as exc:
+        # Rollback any in-flight uncommitted state so the session is clean
+        # before we attempt to write the error status.
+        try:
+            db.rollback()
+        except Exception:
+            pass
         try:
             run = db.get(SchedulerRun, run_id) or db.query(SchedulerRun).filter_by(run_id=run_id).first()
             if run:
