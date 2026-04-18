@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { CheckCircle, Pencil, XCircle } from 'lucide-react'
 import { api } from '../../lib/api'
 import type { ConnectionConfig, ConnectionConfigUpdate, FullConfig } from '../../types'
-import { INPUT_CLS, MField, Modal, PageHeader, PORT_CLS, ServerError } from '../../components/settings/shared'
+import { INPUT_CLS, MField, Modal, PageHeader, PORT_CLS, ServerError, Toggle } from '../../components/settings/shared'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -128,12 +128,7 @@ function ArrModal({
   return (
     <Modal title={`Edit ${label}`} onClose={onClose}>
       <MField label="Enabled">
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input type="checkbox" checked={local.enabled}
-            onChange={(e) => setLocal({ ...local, enabled: e.target.checked })}
-            className="w-4 h-4 accent-indigo-500" />
-          <span className="text-xs text-slate-400">Enable this instance</span>
-        </label>
+        <Toggle checked={local.enabled} onChange={(v) => setLocal({ ...local, enabled: v })} />
       </MField>
       <MField label="Host" tooltip="IP address or hostname (e.g. 192.168.1.100)">
         <input type="text" value={local.host} placeholder="192.168.1.x"
@@ -191,12 +186,7 @@ function RdtModal({
   return (
     <Modal title="Edit RDT-client" onClose={onClose}>
       <MField label="Enabled">
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input type="checkbox" checked={local.enabled}
-            onChange={(e) => setLocal({ ...local, enabled: e.target.checked })}
-            className="w-4 h-4 accent-indigo-500" />
-          <span className="text-xs text-slate-400">Enable RDT-client</span>
-        </label>
+        <Toggle checked={local.enabled} onChange={(v) => setLocal({ ...local, enabled: v })} />
       </MField>
       <MField label="Host" tooltip="IP address or hostname of your RDT-client instance">
         <input type="text" value={local.host} placeholder="192.168.1.x"

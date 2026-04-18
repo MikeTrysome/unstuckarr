@@ -5,12 +5,14 @@ import {
   LayoutDashboard,
   List,
   LogOut,
+  Monitor,
   Moon,
   Network,
   ScrollText,
   Sliders,
   Sun,
   User,
+  X,
 } from 'lucide-react'
 import { clearToken } from '../../lib/auth'
 import { useTheme } from '../../hooks/useTheme'
@@ -23,17 +25,26 @@ const mainNav = [
 ]
 
 const settingsNav = [
-  { to: '/connections',  label: 'Connections',  icon: Network },
-  { to: '/detection',    label: 'Detection',    icon: Sliders },
-  { to: '/notifications',label: 'Notifications',icon: Bell },
-  { to: '/account',      label: 'Account',      icon: User },
+  { to: '/connections',   label: 'Connections',   icon: Network },
+  { to: '/detection',     label: 'Detection',     icon: Sliders },
+  { to: '/notifications', label: 'Notifications', icon: Bell },
+  { to: '/account',       label: 'Account',       icon: User },
 ]
 
-function NavItem({ to, label, icon: Icon, end }: { to: string; label: string; icon: React.ElementType; end?: boolean }) {
+function NavItem({
+  to, label, icon: Icon, end, onClick,
+}: {
+  to: string
+  label: string
+  icon: React.ElementType
+  end?: boolean
+  onClick?: () => void
+}) {
   return (
     <NavLink
       to={to}
       end={end}
+      onClick={onClick}
       className={({ isActive }) =>
         `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
           isActive
@@ -48,29 +59,41 @@ function NavItem({ to, label, icon: Icon, end }: { to: string; label: string; ic
   )
 }
 
-export function Sidebar() {
+export function Sidebar({ onClose }: { onClose?: () => void }) {
   const navigate = useNavigate()
-  const { theme, toggle } = useTheme()
+  const { theme, cycle } = useTheme()
 
   const handleLogout = () => {
     clearToken()
     navigate('/login')
   }
 
+  const ThemeIcon = theme === 'dark' ? Moon : theme === 'light' ? Sun : Monitor
+  const themeLabel = theme === 'dark' ? 'Dark mode' : theme === 'light' ? 'Light mode' : 'System'
+
   return (
-    <aside className="w-56 shrink-0 bg-[var(--bg-card)] border-r border-[var(--bd)] flex flex-col">
+    <aside className="w-56 h-full bg-[var(--bg-card)] border-r border-[var(--bd)] flex flex-col">
       {/* Logo */}
-      <div className="px-5 py-5 border-b border-[var(--bd)]">
+      <div className="px-5 py-5 border-b border-[var(--bd)] flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <img src="/favicon.svg" alt="Unstuckarr" className="w-7 h-7" />
+          <img src="/icon.svg" alt="Unstuckarr" className="w-7 h-7" />
           <span className="font-semibold text-white text-sm tracking-wide">Unstuckarr</span>
         </div>
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="lg:hidden text-slate-500 hover:text-slate-300 transition-colors"
+            aria-label="Close menu"
+          >
+            <X size={16} />
+          </button>
+        )}
       </div>
 
       <nav className="flex-1 p-3 flex flex-col gap-0.5 overflow-y-auto">
         {/* Main navigation */}
         {mainNav.map(({ to, label, icon, end }) => (
-          <NavItem key={to} to={to} label={label} icon={icon} end={end} />
+          <NavItem key={to} to={to} label={label} icon={icon} end={end} onClick={onClose} />
         ))}
 
         {/* Settings section */}
@@ -80,18 +103,18 @@ export function Sidebar() {
           </span>
         </div>
         {settingsNav.map(({ to, label, icon }) => (
-          <NavItem key={to} to={to} label={label} icon={icon} />
+          <NavItem key={to} to={to} label={label} icon={icon} onClick={onClose} />
         ))}
       </nav>
 
       {/* Bottom actions */}
       <div className="px-3 py-3 border-t border-[var(--bd)] flex flex-col gap-1">
         <button
-          onClick={toggle}
+          onClick={cycle}
           className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-400 hover:text-slate-200 hover:bg-white/5 transition-colors w-full"
         >
-          {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-          {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+          <ThemeIcon size={16} />
+          {themeLabel}
         </button>
         <button
           onClick={handleLogout}

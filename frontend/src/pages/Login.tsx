@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Activity } from 'lucide-react'
 import { api } from '../lib/api'
 import { setToken } from '../lib/auth'
 
@@ -37,9 +36,7 @@ export default function Login() {
     <div className="min-h-screen bg-[var(--bg-base)] flex items-center justify-center">
       <div className="w-full max-w-sm">
         <div className="flex items-center justify-center gap-3 mb-8">
-          <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center">
-            <Activity size={18} className="text-white" />
-          </div>
+          <img src="/icon.svg" alt="Unstuckarr" className="w-9 h-9" />
           <span className="text-xl font-semibold text-white">Unstuckarr</span>
         </div>
 

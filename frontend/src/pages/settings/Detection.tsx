@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api } from '../../lib/api'
 import type { DbConfig } from '../../types'
-import { NUMBER_CLS, PageHeader, SectionCard, ServerError, Tip } from '../../components/settings/shared'
+import { NUMBER_CLS, PageHeader, SectionCard, ServerError, Tip, Toggle } from '../../components/settings/shared'
 
 export default function Detection() {
   const [db, setDb]         = useState<DbConfig | null>(null)
@@ -57,18 +57,16 @@ export default function Detection() {
             <span className="text-sm text-slate-400">Scheduler enabled</span>
             <Tip text="Run cleanup automatically on the configured interval." />
           </div>
-          <input type="checkbox" checked={val('scheduler_enabled') as boolean}
-            onChange={(e) => setVal('scheduler_enabled', e.target.checked as never)}
-            className="w-4 h-4 accent-indigo-500" />
+          <Toggle checked={val('scheduler_enabled') as boolean}
+            onChange={(v) => setVal('scheduler_enabled', v as never)} />
         </div>
         <div className="flex items-center justify-between py-2.5">
           <div className="flex items-center gap-1.5">
             <span className="text-sm text-slate-400">Dry run mode</span>
             <Tip text="Log stuck items but do not actually remove them from ARR." />
           </div>
-          <input type="checkbox" checked={val('scheduler_dry_run') as boolean}
-            onChange={(e) => setVal('scheduler_dry_run', e.target.checked as never)}
-            className="w-4 h-4 accent-indigo-500" />
+          <Toggle checked={val('scheduler_dry_run') as boolean}
+            onChange={(v) => setVal('scheduler_dry_run', v as never)} />
         </div>
       </SectionCard>
 
@@ -110,9 +108,8 @@ export default function Detection() {
             <span className="text-sm text-slate-400">Strikes enabled</span>
             <Tip text="When enabled, stuck downloads accumulate strikes across runs. Removal only happens once the threshold is reached. Prevents removing downloads that are only temporarily stuck." />
           </div>
-          <input type="checkbox" checked={val('strikes_enabled') as boolean}
-            onChange={(e) => setVal('strikes_enabled', e.target.checked as never)}
-            className="w-4 h-4 accent-indigo-500" />
+          <Toggle checked={val('strikes_enabled') as boolean}
+            onChange={(v) => setVal('strikes_enabled', v as never)} />
         </div>
         {[
           {

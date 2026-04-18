@@ -1,8 +1,19 @@
 import { useEffect, useState } from 'react'
 
-type Theme = 'dark' | 'light'
+export type Theme = 'dark' | 'light' | 'system'
 
 const STORAGE_KEY = 'unstuckarr_theme'
+
+function getSystemTheme(): 'dark' | 'light' {
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+}
+
+export function applyTheme(theme: Theme) {
+  const resolved = theme === 'system' ? getSystemTheme() : theme
+  const root = document.documentElement
+  root.classList.toggle('light', resolved === 'light')
+  root.classList.toggle('dark', resolved === 'dark')
+}
 
 export function useTheme() {
   const [theme, setTheme] = useState<Theme>(() =>
@@ -10,18 +21,19 @@ export function useTheme() {
   )
 
   useEffect(() => {
-    const root = document.documentElement
-    if (theme === 'light') {
-      root.classList.add('light')
-      root.classList.remove('dark')
-    } else {
-      root.classList.remove('light')
-      root.classList.add('dark')
-    }
+    applyTheme(theme)
     localStorage.setItem(STORAGE_KEY, theme)
+
+    if (theme === 'system') {
+      const mq = window.matchMedia('(prefers-color-scheme: dark)')
+      const handler = () => applyTheme('system')
+      mq.addEventListener('change', handler)
+      return () => mq.removeEventListener('change', handler)
+    }
   }, [theme])
 
-  const toggle = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))
+  // Cycle: dark → light → system → dark
+  const cycle = () => setTheme((t) => (t === 'dark' ? 'light' : t === 'light' ? 'system' : 'dark'))
 
-  return { theme, toggle }
+  return { theme, cycle }
 }
