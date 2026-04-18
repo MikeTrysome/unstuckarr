@@ -65,10 +65,13 @@ export const api = {
 
   auth: {
     status: () => req<{ configured: boolean }>('/auth/status'),
-    setup: (password: string) =>
-      req<{ ok: boolean }>('/auth/setup', { method: 'POST', body: JSON.stringify({ password }) }),
-    login: (password: string) => req<{ token: string }>('/auth/login', { method: 'POST', body: JSON.stringify({ password }) }),
+    setup: (username: string, password: string) =>
+      req<{ ok: boolean }>('/auth/setup', { method: 'POST', body: JSON.stringify({ username, password }) }),
+    login: (username: string, password: string) =>
+      req<{ token: string }>('/auth/login', { method: 'POST', body: JSON.stringify({ username, password }) }),
     changePassword: (current_password: string, new_password: string) =>
       req<{ ok: boolean }>('/auth/change-password', { method: 'POST', body: JSON.stringify({ current_password, new_password }) }),
+    changeUsername: (current_password: string, new_username: string) =>
+      req<{ ok: boolean }>('/auth/change-username', { method: 'POST', body: JSON.stringify({ current_password, new_username }) }),
   },
 }

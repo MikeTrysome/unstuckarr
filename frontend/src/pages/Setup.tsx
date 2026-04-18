@@ -4,6 +4,7 @@ import { Activity, ShieldCheck } from 'lucide-react'
 import { api } from '../lib/api'
 
 export default function Setup() {
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -11,6 +12,7 @@ export default function Setup() {
   const navigate = useNavigate()
 
   const validate = (): string | null => {
+    if (username.trim().length < 3) return 'Username must be at least 3 characters'
     if (password.length < 12) return 'Password must be at least 12 characters'
     if (password !== confirm) return 'Passwords do not match'
     return null
@@ -26,12 +28,12 @@ export default function Setup() {
     setLoading(true)
     setError(null)
     try {
-      await api.auth.setup(password)
+      await api.auth.setup(username.trim(), password)
       navigate('/login', { replace: true })
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err)
       if (msg.includes('409')) {
-        setError('A password is already set. Go to Settings to change it.')
+        setError('Already configured. Go to Settings to change credentials.')
       } else {
         setError('Setup failed. Please try again.')
       }
@@ -59,8 +61,21 @@ export default function Setup() {
             <h1 className="text-base font-medium text-white">First-time setup</h1>
           </div>
           <p className="text-sm text-slate-400">
-            Choose a password to secure the Unstuckarr web interface. You can change it later in Settings.
+            Choose a username and password to secure the Unstuckarr web interface. You can change them later in Settings.
           </p>
+
+          <div>
+            <label className="block text-sm text-slate-400 mb-1.5">Username</label>
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              autoFocus
+              autoComplete="username"
+              className="w-full px-3 py-2 bg-[#0f1117] border border-[#2a2d3a] rounded-lg text-slate-200 text-sm focus:outline-none focus:border-indigo-500 transition-colors"
+              placeholder="Min. 3 characters"
+            />
+          </div>
 
           <div>
             <label className="block text-sm text-slate-400 mb-1.5">Password</label>
@@ -68,7 +83,7 @@ export default function Setup() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              autoFocus
+              autoComplete="new-password"
               className="w-full px-3 py-2 bg-[#0f1117] border border-[#2a2d3a] rounded-lg text-slate-200 text-sm focus:outline-none focus:border-indigo-500 transition-colors"
               placeholder="Min. 12 characters"
             />
@@ -80,6 +95,7 @@ export default function Setup() {
               type="password"
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
+              autoComplete="new-password"
               className="w-full px-3 py-2 bg-[#0f1117] border border-[#2a2d3a] rounded-lg text-slate-200 text-sm focus:outline-none focus:border-indigo-500 transition-colors"
               placeholder="••••••••"
             />
@@ -89,10 +105,10 @@ export default function Setup() {
 
           <button
             type="submit"
-            disabled={loading || !password || !confirm}
+            disabled={loading || !username || !password || !confirm}
             className="w-full py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-colors disabled:opacity-50"
           >
-            {loading ? 'Setting up...' : 'Set password'}
+            {loading ? 'Setting up...' : 'Create account'}
           </button>
         </form>
       </div>

@@ -5,12 +5,13 @@ import { api } from '../lib/api'
 import { setToken } from '../lib/auth'
 
 export default function Login() {
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
 
-  // Redirect to setup if no password has been configured yet
+  // Redirect to setup if credentials have not been configured yet
   useEffect(() => {
     api.auth.status().then(({ configured }) => {
       if (!configured) navigate('/setup', { replace: true })
@@ -22,11 +23,11 @@ export default function Login() {
     setLoading(true)
     setError(null)
     try {
-      const { token } = await api.auth.login(password)
+      const { token } = await api.auth.login(username.trim(), password)
       setToken(token)
       navigate('/')
     } catch {
-      setError('Invalid password')
+      setError('Invalid username or password')
     } finally {
       setLoading(false)
     }
@@ -49,12 +50,25 @@ export default function Login() {
           <h1 className="text-base font-medium text-white">Sign in</h1>
 
           <div>
+            <label className="block text-sm text-slate-400 mb-1.5">Username</label>
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              autoFocus
+              autoComplete="username"
+              className="w-full px-3 py-2 bg-[#0f1117] border border-[#2a2d3a] rounded-lg text-slate-200 text-sm focus:outline-none focus:border-indigo-500 transition-colors"
+              placeholder="username"
+            />
+          </div>
+
+          <div>
             <label className="block text-sm text-slate-400 mb-1.5">Password</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              autoFocus
+              autoComplete="current-password"
               className="w-full px-3 py-2 bg-[#0f1117] border border-[#2a2d3a] rounded-lg text-slate-200 text-sm focus:outline-none focus:border-indigo-500 transition-colors"
               placeholder="••••••••"
             />
@@ -64,7 +78,7 @@ export default function Login() {
 
           <button
             type="submit"
-            disabled={loading || !password}
+            disabled={loading || !username || !password}
             className="w-full py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-colors disabled:opacity-50"
           >
             {loading ? 'Signing in...' : 'Sign in'}
