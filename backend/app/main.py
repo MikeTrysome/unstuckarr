@@ -21,19 +21,41 @@ limiter = Limiter(key_func=get_remote_address)
 
 
 def _init_auth() -> None:
-    """Hash the plain-text password from env and store it in DB on first start."""
-    from app.auth import get_jwt_secret, hash_password
+    """Ensure the JWT secret exists in DB. Password is set via the /setup UI."""
+    from app.auth import get_jwt_secret
+
+    get_jwt_secret()
+
+
+def _init_connections() -> None:
+    """Seed DB connection config from env vars on first start (backward compatibility)."""
     from app.config import get_settings
     from app.services.db_config import get, set_
 
     settings = get_settings()
     db = SessionLocal()
     try:
-        get_jwt_secret()
-        if settings.password:
-            existing = get(db, "auth.password_hash")
-            if not existing:
-                set_(db, "auth.password_hash", hash_password(settings.password))
+        seeds = {
+            "connection.sonarr.host":      settings.sonarr_host,
+            "connection.sonarr.port":      settings.sonarr_port,
+            "connection.sonarr.api_key":   settings.sonarr_api_key,
+            "connection.sonarr4k.host":    settings.sonarr4k_host,
+            "connection.sonarr4k.port":    settings.sonarr4k_port,
+            "connection.sonarr4k.api_key": settings.sonarr4k_api_key,
+            "connection.radarr.host":      settings.radarr_host,
+            "connection.radarr.port":      settings.radarr_port,
+            "connection.radarr.api_key":   settings.radarr_api_key,
+            "connection.radarr4k.host":    settings.radarr4k_host,
+            "connection.radarr4k.port":    settings.radarr4k_port,
+            "connection.radarr4k.api_key": settings.radarr4k_api_key,
+            "connection.rdt.host":         settings.rdt_host,
+            "connection.rdt.port":         settings.rdt_port,
+            "connection.rdt.username":     settings.rdt_username,
+            "connection.rdt.password":     settings.rdt_password,
+        }
+        for key, value in seeds.items():
+            if value and not get(db, key):
+                set_(db, key, value)
     finally:
         db.close()
 
@@ -62,6 +84,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 async def lifespan(app: FastAPI):
     init_db()
     _init_auth()
+    _init_connections()
     broadcaster.set_loop(__import__("asyncio").get_event_loop())
     await sched.start()
     yield

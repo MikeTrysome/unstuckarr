@@ -14,11 +14,17 @@ RDT_ERROR_PATTERNS = [
 
 
 class RdtAdapter(DownloadClientAdapter):
-    def __init__(self):
+    def __init__(
+        self,
+        host: str | None = None,
+        port: int | None = None,
+        username: str | None = None,
+        password: str | None = None,
+    ):
         settings = get_settings()
-        self._base_url = f"http://{settings.rdt_host}:{settings.rdt_port}"
-        self._username = settings.rdt_username
-        self._password = settings.rdt_password
+        self._base_url = f"http://{host or settings.rdt_host}:{port or settings.rdt_port}"
+        self._username = username or settings.rdt_username
+        self._password = password or settings.rdt_password
         self._client: httpx.Client | None = None
         self._logged_in = False
 

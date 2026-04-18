@@ -1,11 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.orm import Session
 
 _VALID_INSTANCES = {"Sonarr", "Sonarr-4K", "Radarr", "Radarr-4K"}
 
 from app.adapters.rdt_adapter import RdtAdapter
 from app.auth import require_auth
-from app.config import get_settings
+from app.database import get_db
 from app.schemas.queue import StuckItemOut
+from app.services import db_config
 from app.services.arr_service import ArrService
 from app.services.db_config import DEFAULTS
 from app.services.detection import DetectionConfig, find_stuck_items
@@ -23,17 +25,24 @@ def _get_detection_config() -> DetectionConfig:
 
 
 @router.get("/queue", response_model=list[StuckItemOut])
-def get_stuck_queue(instance: str | None = Query(None, description="Filter by instance name")):
+def get_stuck_queue(
+    instance: str | None = Query(None, description="Filter by instance name"),
+    db: Session = Depends(get_db),
+):
     if instance and instance not in _VALID_INSTANCES:
         raise HTTPException(status_code=400, detail=f"Invalid instance. Valid: {sorted(_VALID_INSTANCES)}")
 
-    settings = get_settings()
-
+    rdt_cfg = db_config.get_rdt_config_from_db(db)
     rdt_index: dict = {}
-    use_rdt = settings.rdt_enabled
+    use_rdt = rdt_cfg["enabled"]
     if use_rdt:
         try:
-            adapter = RdtAdapter()
+            adapter = RdtAdapter(
+                host=rdt_cfg["host"] or None,
+                port=rdt_cfg["port"] or None,
+                username=rdt_cfg["username"] or None,
+                password=rdt_cfg["password"] or None,
+            )
             torrents = adapter.get_torrents()
             rdt_index = adapter.build_hash_index(torrents)
         except Exception:
@@ -42,7 +51,7 @@ def get_stuck_queue(instance: str | None = Query(None, description="Filter by in
     detection_cfg = _get_detection_config()
     results: list[StuckItemOut] = []
 
-    for inst in settings.get_arr_instances():
+    for inst in db_config.get_arr_instances_from_db(db):
         if not inst.enabled:
             continue
         if instance and inst.name.lower() != instance.lower():
@@ -72,10 +81,16 @@ def get_stuck_queue(instance: str | None = Query(None, description="Filter by in
 
 
 @router.get("/queue/rdt-torrents")
-def get_rdt_torrents():
+def get_rdt_torrents(db: Session = Depends(get_db)):
     """Raw RDT torrent list for debugging."""
+    rdt_cfg = db_config.get_rdt_config_from_db(db)
     try:
-        adapter = RdtAdapter()
+        adapter = RdtAdapter(
+            host=rdt_cfg["host"] or None,
+            port=rdt_cfg["port"] or None,
+            username=rdt_cfg["username"] or None,
+            password=rdt_cfg["password"] or None,
+        )
         torrents = adapter.get_torrents()
         return [t.model_dump(exclude={"raw"}) for t in torrents]
     except Exception as exc:

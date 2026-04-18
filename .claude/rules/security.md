@@ -7,15 +7,23 @@ paths:
 
 # Security Rules
 
-## Secrets — Never in Code
+## Secrets — Storage Rules
 
-Secrets live in environment variables only. They are never:
+Secrets are **never**:
 - Hardcoded in Python or TypeScript files
 - Committed to git
-- Returned in API responses (mask with `***`)
-- Stored in the SQLite `config_entries` table
+- Returned in API responses in plaintext (return `_set: bool` or mask with `***`)
 
-The `UNSTUCKARR_PASSWORD` env var is consumed once at startup to seed bcrypt — after that it's not stored anywhere.
+**Connection credentials** (API keys, RDT password) are stored in the `config_entries` DB table,
+**encrypted at rest** via `app.crypto` (Fernet AES-128). The encryption key lives in
+`{DATA_DIR}/.secret_key` (mode 0o400, owner-read-only). Never log or expose this key.
+
+**Auth password** is bcrypt-hashed (one-way), never stored as plaintext anywhere.
+
+**JWT secret** is a random 32-byte hex string, stored as plaintext in `config_entries`
+(intentionally, as it provides no user-data protection and is safe to regenerate).
+
+`UNSTUCKARR_PASSWORD` env var support has been removed — password is set via the `/setup` UI.
 
 ## Auth — Backend
 

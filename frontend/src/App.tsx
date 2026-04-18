@@ -6,6 +6,7 @@ import Login from './pages/Login'
 import Logs from './pages/Logs'
 import Queue from './pages/Queue'
 import Settings from './pages/Settings'
+import Setup from './pages/Setup'
 import { isAuthenticated } from './lib/auth'
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
@@ -17,6 +18,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/setup" element={<Setup />} />
         <Route path="/login" element={<Login />} />
         <Route
           element={

@@ -11,7 +11,6 @@ from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 
 from app.adapters.rdt_adapter import RdtAdapter
-from app.config import get_settings
 from app.database import SessionLocal
 from app.models.event import CleanupEvent
 from app.models.run import SchedulerRun
@@ -46,8 +45,6 @@ def run_cleanup(dry_run: bool | None = None, triggered_by: str = "scheduler") ->
     db = SessionLocal()
 
     try:
-        settings = get_settings()
-
         # Resolve dry_run: explicit arg > DB config
         if dry_run is None:
             dry_run = db_config.get(db, "scheduler.dry_run")
@@ -76,11 +73,17 @@ def run_cleanup(dry_run: bool | None = None, triggered_by: str = "scheduler") ->
 
         # Fetch RDT torrents once for all ARR instances
         rdt_index: dict = {}
-        use_rdt = settings.rdt_enabled
+        rdt_cfg = db_config.get_rdt_config_from_db(db)
+        use_rdt = rdt_cfg["enabled"]
         if use_rdt:
             _log("INFO", "Fetching RDT-client torrents...", run_id=run_id)
             try:
-                adapter = RdtAdapter()
+                adapter = RdtAdapter(
+                    host=rdt_cfg["host"] or None,
+                    port=rdt_cfg["port"] or None,
+                    username=rdt_cfg["username"] or None,
+                    password=rdt_cfg["password"] or None,
+                )
                 rdt_torrents = adapter.get_torrents()
                 rdt_index = adapter.build_hash_index(rdt_torrents)
                 _log("INFO", f"{len(rdt_torrents)} torrents fetched, {len(rdt_index)} indexed", run_id=run_id)
@@ -88,7 +91,7 @@ def run_cleanup(dry_run: bool | None = None, triggered_by: str = "scheduler") ->
                 _log("WARN", f"RDT-client fetch failed: {exc} — cross-check skipped", run_id=run_id)
                 use_rdt = False
 
-        for instance in settings.get_arr_instances():
+        for instance in db_config.get_arr_instances_from_db(db):
             if not instance.enabled:
                 continue
 

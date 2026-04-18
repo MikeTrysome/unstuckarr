@@ -19,7 +19,7 @@ class DbConfigIn(BaseModel):
     notifications_apprise_urls: list[str] | None = Field(None, max_length=20)
 
 
-class EnvConfigOut(BaseModel):
+class ConnectionConfigOut(BaseModel):
     sonarr_host: str
     sonarr_port: int
     sonarr_api_key_set: bool
@@ -38,12 +38,40 @@ class EnvConfigOut(BaseModel):
     radarr4k_enabled: bool
     rdt_host: str
     rdt_port: int
-    rdt_username_set: bool
-    rdt_password_set: bool
+    rdt_username: str   # username is not secret, show it
+    rdt_password_set: bool  # password IS secret, only show if set
     rdt_enabled: bool
-    interval_minutes: int
+
+
+class ConnectionConfigIn(BaseModel):
+    sonarr_host: str | None = None
+    sonarr_port: int | None = Field(None, ge=1, le=65535)
+    sonarr_api_key: str | None = None   # empty string or "***" = don't update
+    sonarr_enabled: bool | None = None
+    sonarr4k_host: str | None = None
+    sonarr4k_port: int | None = Field(None, ge=1, le=65535)
+    sonarr4k_api_key: str | None = None
+    sonarr4k_enabled: bool | None = None
+    radarr_host: str | None = None
+    radarr_port: int | None = Field(None, ge=1, le=65535)
+    radarr_api_key: str | None = None
+    radarr_enabled: bool | None = None
+    radarr4k_host: str | None = None
+    radarr4k_port: int | None = Field(None, ge=1, le=65535)
+    radarr4k_api_key: str | None = None
+    radarr4k_enabled: bool | None = None
+    rdt_host: str | None = None
+    rdt_port: int | None = Field(None, ge=1, le=65535)
+    rdt_username: str | None = None
+    rdt_password: str | None = None  # empty string or "***" = don't update
+    rdt_enabled: bool | None = None
+
+
+class FullConfigIn(BaseModel):
+    connections: ConnectionConfigIn | None = None
+    db: DbConfigIn | None = None
 
 
 class FullConfigOut(BaseModel):
-    env: EnvConfigOut
+    connections: ConnectionConfigOut
     db: DbConfigOut

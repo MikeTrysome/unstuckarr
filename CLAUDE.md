@@ -102,15 +102,24 @@ cd backend && python -m ruff check app/
 
 | Variable | Default | Notes |
 |---|---|---|
-| `UNSTUCKARR_SONARR_API_KEY` | `""` | Required for Sonarr |
-| `UNSTUCKARR_SONARR4K_API_KEY` | `""` | Required for Sonarr-4K |
-| `UNSTUCKARR_RADARR_API_KEY` | `""` | Required for Radarr |
-| `UNSTUCKARR_RADARR4K_API_KEY` | `""` | Required for Radarr-4K |
-| `UNSTUCKARR_RDT_USERNAME` | `""` | RDT-client login |
-| `UNSTUCKARR_RDT_PASSWORD` | `""` | RDT-client login |
-| `UNSTUCKARR_PASSWORD` | `""` | Web UI login (seeded to bcrypt, not stored) |
+| `UNSTUCKARR_SONARR_HOST` | `192.168.1.135` | Seeds DB on first start; edit via Settings UI |
+| `UNSTUCKARR_SONARR_PORT` | `8989` | Seeds DB on first start |
+| `UNSTUCKARR_SONARR_API_KEY` | `""` | Seeds DB (encrypted) on first start |
+| `UNSTUCKARR_SONARR4K_*` | | Same pattern |
+| `UNSTUCKARR_RADARR_*` | | Same pattern |
+| `UNSTUCKARR_RADARR4K_*` | | Same pattern |
+| `UNSTUCKARR_RDT_HOST` | `192.168.1.135` | Seeds DB on first start |
+| `UNSTUCKARR_RDT_PORT` | `6500` | Seeds DB on first start |
+| `UNSTUCKARR_RDT_USERNAME` | `""` | Seeds DB on first start |
+| `UNSTUCKARR_RDT_PASSWORD` | `""` | Seeds DB (encrypted) on first start |
 | `UNSTUCKARR_INTERVAL_MINUTES` | `10` | Cleanup interval |
 | `UNSTUCKARR_DATA_DIR` | `/data` | SQLite directory |
+
+**Note:** All connection settings can be configured (and changed) via the Settings UI.
+Env vars are only needed if you want to pre-seed settings at first start. They are NOT required.
+
+**Encryption:** API keys and the RDT password are encrypted at rest (Fernet AES-128).
+Encryption key: `{DATA_DIR}/.secret_key` (generated on first start). Never expose this file.
 
 ---
 

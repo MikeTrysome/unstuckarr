@@ -1,32 +1,40 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Activity } from 'lucide-react'
+import { Activity, ShieldCheck } from 'lucide-react'
 import { api } from '../lib/api'
-import { setToken } from '../lib/auth'
 
-export default function Login() {
+export default function Setup() {
   const [password, setPassword] = useState('')
+  const [confirm, setConfirm] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
 
-  // Redirect to setup if no password has been configured yet
-  useEffect(() => {
-    api.auth.status().then(({ configured }) => {
-      if (!configured) navigate('/setup', { replace: true })
-    }).catch(() => { /* ignore — backend may be starting */ })
-  }, [navigate])
+  const validate = (): string | null => {
+    if (password.length < 12) return 'Password must be at least 12 characters'
+    if (password !== confirm) return 'Passwords do not match'
+    return null
+  }
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
+    const validationError = validate()
+    if (validationError) {
+      setError(validationError)
+      return
+    }
     setLoading(true)
     setError(null)
     try {
-      const { token } = await api.auth.login(password)
-      setToken(token)
-      navigate('/')
-    } catch {
-      setError('Invalid password')
+      await api.auth.setup(password)
+      navigate('/login', { replace: true })
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err)
+      if (msg.includes('409')) {
+        setError('A password is already set. Go to Settings to change it.')
+      } else {
+        setError('Setup failed. Please try again.')
+      }
     } finally {
       setLoading(false)
     }
@@ -46,7 +54,13 @@ export default function Login() {
           onSubmit={submit}
           className="bg-[#1a1d27] rounded-2xl border border-[#2a2d3a] p-6 space-y-4"
         >
-          <h1 className="text-base font-medium text-white">Sign in</h1>
+          <div className="flex items-center gap-2 mb-1">
+            <ShieldCheck size={16} className="text-indigo-400" />
+            <h1 className="text-base font-medium text-white">First-time setup</h1>
+          </div>
+          <p className="text-sm text-slate-400">
+            Choose a password to secure the Unstuckarr web interface. You can change it later in Settings.
+          </p>
 
           <div>
             <label className="block text-sm text-slate-400 mb-1.5">Password</label>
@@ -56,6 +70,17 @@ export default function Login() {
               onChange={(e) => setPassword(e.target.value)}
               autoFocus
               className="w-full px-3 py-2 bg-[#0f1117] border border-[#2a2d3a] rounded-lg text-slate-200 text-sm focus:outline-none focus:border-indigo-500 transition-colors"
+              placeholder="Min. 12 characters"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm text-slate-400 mb-1.5">Confirm password</label>
+            <input
+              type="password"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              className="w-full px-3 py-2 bg-[#0f1117] border border-[#2a2d3a] rounded-lg text-slate-200 text-sm focus:outline-none focus:border-indigo-500 transition-colors"
               placeholder="••••••••"
             />
           </div>
@@ -64,10 +89,10 @@ export default function Login() {
 
           <button
             type="submit"
-            disabled={loading || !password}
+            disabled={loading || !password || !confirm}
             className="w-full py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-colors disabled:opacity-50"
           >
-            {loading ? 'Signing in...' : 'Sign in'}
+            {loading ? 'Setting up...' : 'Set password'}
           </button>
         </form>
       </div>

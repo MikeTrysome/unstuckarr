@@ -1,21 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api } from '../lib/api'
-import type { DbConfig, FullConfig } from '../types'
-import { Check, X } from 'lucide-react'
-
-function Row({ label, value, ok }: { label: string; value: string | boolean; ok?: boolean }) {
-  return (
-    <div className="flex items-center justify-between py-2.5 border-b border-[#2a2d3a] last:border-0">
-      <span className="text-sm text-slate-400">{label}</span>
-      <div className="flex items-center gap-2">
-        {ok !== undefined && (
-          ok ? <Check size={14} className="text-green-400" /> : <X size={14} className="text-red-400" />
-        )}
-        <span className="text-sm text-slate-200 font-mono">{String(value)}</span>
-      </div>
-    </div>
-  )
-}
+import type { ConnectionConfig, ConnectionConfigUpdate, DbConfig, FullConfig } from '../types'
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -28,9 +13,165 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   )
 }
 
+function FieldRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-center justify-between py-2.5 border-b border-[#2a2d3a] last:border-0 gap-4">
+      <span className="text-sm text-slate-400 shrink-0">{label}</span>
+      <div className="flex items-center gap-2">{children}</div>
+    </div>
+  )
+}
+
+interface ArrDraft {
+  host: string
+  port: number
+  api_key: string   // empty = "don't send"
+  enabled: boolean
+}
+
+interface RdtDraft {
+  host: string
+  port: number
+  username: string
+  password: string  // empty = "don't send"
+  enabled: boolean
+}
+
+function buildArrDraft(conn: ConnectionConfig, prefix: 'sonarr' | 'sonarr4k' | 'radarr' | 'radarr4k'): ArrDraft {
+  return {
+    host:    (conn as never)[`${prefix}_host`] as string,
+    port:    (conn as never)[`${prefix}_port`] as number,
+    api_key: '',   // never pre-fill secrets
+    enabled: (conn as never)[`${prefix}_enabled`] as boolean,
+  }
+}
+
+interface ConnDrafts {
+  sonarr:   ArrDraft
+  sonarr4k: ArrDraft
+  radarr:   ArrDraft
+  radarr4k: ArrDraft
+  rdt: RdtDraft
+}
+
+function buildConnDrafts(conn: ConnectionConfig): ConnDrafts {
+  return {
+    sonarr:   buildArrDraft(conn, 'sonarr'),
+    sonarr4k: buildArrDraft(conn, 'sonarr4k'),
+    radarr:   buildArrDraft(conn, 'radarr'),
+    radarr4k: buildArrDraft(conn, 'radarr4k'),
+    rdt: {
+      host:     conn.rdt_host,
+      port:     conn.rdt_port,
+      username: conn.rdt_username,
+      password: '',   // never pre-fill secrets
+      enabled:  conn.rdt_enabled,
+    },
+  }
+}
+
+function buildConnectionUpdate(drafts: ConnDrafts): ConnectionConfigUpdate {
+  const upd: ConnectionConfigUpdate = {}
+
+  const arr = (
+    key: 'sonarr' | 'sonarr4k' | 'radarr' | 'radarr4k',
+    d: ArrDraft,
+  ) => {
+    upd[`${key}_host` as keyof ConnectionConfigUpdate] = d.host as never
+    upd[`${key}_port` as keyof ConnectionConfigUpdate] = d.port as never
+    upd[`${key}_enabled` as keyof ConnectionConfigUpdate] = d.enabled as never
+    if (d.api_key) {
+      upd[`${key}_api_key` as keyof ConnectionConfigUpdate] = d.api_key as never
+    }
+  }
+
+  arr('sonarr',   drafts.sonarr)
+  arr('sonarr4k', drafts.sonarr4k)
+  arr('radarr',   drafts.radarr)
+  arr('radarr4k', drafts.radarr4k)
+
+  upd.rdt_host     = drafts.rdt.host
+  upd.rdt_port     = drafts.rdt.port
+  upd.rdt_username = drafts.rdt.username
+  upd.rdt_enabled  = drafts.rdt.enabled
+  if (drafts.rdt.password) {
+    upd.rdt_password = drafts.rdt.password
+  }
+
+  return upd
+}
+
+function ArrInstanceForm({
+  label,
+  keySet,
+  draft,
+  onChange,
+  testResult,
+}: {
+  label: string
+  keySet: boolean
+  draft: ArrDraft
+  onChange: (d: ArrDraft) => void
+  testResult?: boolean
+}) {
+  return (
+    <div className="py-2 space-y-0 border-b border-[#2a2d3a] last:border-0">
+      <div className="flex items-center justify-between py-1.5">
+        <span className="text-sm font-medium text-slate-200">{label}</span>
+        <label className="flex items-center gap-2 text-xs text-slate-400 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={draft.enabled}
+            onChange={(e) => onChange({ ...draft, enabled: e.target.checked })}
+            className="w-4 h-4 accent-indigo-500"
+          />
+          Enabled
+        </label>
+      </div>
+      <FieldRow label="Host">
+        <input
+          type="text"
+          value={draft.host}
+          onChange={(e) => onChange({ ...draft, host: e.target.value })}
+          placeholder="192.168.1.x"
+          className="w-48 px-2 py-1 text-sm bg-[#0f1117] border border-[#2a2d3a] rounded-lg text-slate-200 focus:outline-none focus:border-indigo-500 font-mono"
+        />
+      </FieldRow>
+      <FieldRow label="Port">
+        <input
+          type="number"
+          value={draft.port}
+          onChange={(e) => onChange({ ...draft, port: Number(e.target.value) })}
+          min={1}
+          max={65535}
+          className="w-24 px-2 py-1 text-sm bg-[#0f1117] border border-[#2a2d3a] rounded-lg text-slate-200 focus:outline-none focus:border-indigo-500 font-mono text-center"
+        />
+        {testResult !== undefined && (
+          <span className={`text-xs ${testResult ? 'text-green-400' : 'text-red-400'}`}>
+            {testResult ? 'OK' : 'Failed'}
+          </span>
+        )}
+      </FieldRow>
+      <FieldRow label="API Key">
+        <input
+          type="password"
+          value={draft.api_key}
+          onChange={(e) => onChange({ ...draft, api_key: e.target.value })}
+          placeholder={keySet ? 'Set new key to change' : 'No key set'}
+          className="w-48 px-2 py-1 text-sm bg-[#0f1117] border border-[#2a2d3a] rounded-lg text-slate-200 focus:outline-none focus:border-indigo-500 font-mono placeholder:text-slate-600"
+        />
+        {keySet && !draft.api_key && (
+          <span className="text-xs text-slate-500">key set</span>
+        )}
+      </FieldRow>
+    </div>
+  )
+}
+
 export default function Settings() {
   const [config, setConfig] = useState<FullConfig | null>(null)
-  const [draft, setDraft] = useState<Partial<DbConfig>>({})
+  const [connDrafts, setConnDrafts] = useState<ConnDrafts | null>(null)
+  const [dbDraft, setDbDraft] = useState<Partial<DbConfig>>({})
   const [saved, setSaved] = useState(false)
   const [testResults, setTestResults] = useState<Record<string, boolean> | null>(null)
   const [testing, setTesting] = useState(false)
@@ -38,12 +179,23 @@ export default function Settings() {
   useEffect(() => {
     api.config.get().then((c) => {
       setConfig(c)
-      setDraft({ ...c.db })
+      setConnDrafts(buildConnDrafts(c.connections))
+      setDbDraft({ ...c.db })
     }).catch(() => {})
   }, [])
 
   const save = async () => {
-    await api.config.update(draft).catch(() => {})
+    if (!connDrafts) return
+    const updated = await api.config.update({
+      connections: buildConnectionUpdate(connDrafts),
+      db: dbDraft,
+    }).catch(() => null)
+    if (updated) {
+      setConfig(updated)
+      // Reset connection drafts from new server state (api_key fields cleared)
+      setConnDrafts(buildConnDrafts(updated.connections))
+      setDbDraft({ ...updated.db })
+    }
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
   }
@@ -55,42 +207,49 @@ export default function Settings() {
     setTesting(false)
   }
 
-  if (!config) return <p className="text-slate-500 text-sm">Loading...</p>
+  if (!config || !connDrafts) return <p className="text-slate-500 text-sm">Loading...</p>
 
-  const { env, db } = config
+  const { connections, db } = config
 
   return (
     <div className="space-y-5 max-w-2xl">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-white">Settings</h1>
-          <p className="text-sm text-slate-400 mt-0.5">
-            Secrets are managed via environment variables.
-            Thresholds and scheduler settings are configurable here.
-          </p>
-        </div>
+      <div>
+        <h1 className="text-xl font-semibold text-white">Settings</h1>
+        <p className="text-sm text-slate-400 mt-0.5">
+          Configure connections and detection settings. API keys are stored securely in the local database.
+        </p>
       </div>
 
-      {/* Connection status */}
-      <Section title="Connections (env vars)">
+      {/* ARR Instances */}
+      <Section title="ARR Connections">
         <div className="py-1">
-          {[
-            { label: 'Sonarr', host: env.sonarr_host, port: env.sonarr_port, key: env.sonarr_api_key_set },
-            { label: 'Sonarr-4K', host: env.sonarr4k_host, port: env.sonarr4k_port, key: env.sonarr4k_api_key_set },
-            { label: 'Radarr', host: env.radarr_host, port: env.radarr_port, key: env.radarr_api_key_set },
-            { label: 'Radarr-4K', host: env.radarr4k_host, port: env.radarr4k_port, key: env.radarr4k_api_key_set },
-          ].map(({ label, host, port, key }) => (
-            <Row
-              key={label}
-              label={label}
-              value={`${host}:${port}`}
-              ok={key && testResults ? testResults[label] : key ? undefined : false}
-            />
-          ))}
-          <Row
-            label="RDT-client"
-            value={`${env.rdt_host}:${env.rdt_port}`}
-            ok={env.rdt_username_set && env.rdt_password_set && testResults ? testResults['RDT-client'] : undefined}
+          <ArrInstanceForm
+            label="Sonarr"
+            keySet={connections.sonarr_api_key_set}
+            draft={connDrafts.sonarr}
+            onChange={(d) => setConnDrafts((prev) => prev ? { ...prev, sonarr: d } : prev)}
+            testResult={testResults?.['Sonarr']}
+          />
+          <ArrInstanceForm
+            label="Sonarr-4K"
+            keySet={connections.sonarr4k_api_key_set}
+            draft={connDrafts.sonarr4k}
+            onChange={(d) => setConnDrafts((prev) => prev ? { ...prev, sonarr4k: d } : prev)}
+            testResult={testResults?.['Sonarr-4K']}
+          />
+          <ArrInstanceForm
+            label="Radarr"
+            keySet={connections.radarr_api_key_set}
+            draft={connDrafts.radarr}
+            onChange={(d) => setConnDrafts((prev) => prev ? { ...prev, radarr: d } : prev)}
+            testResult={testResults?.['Radarr']}
+          />
+          <ArrInstanceForm
+            label="Radarr-4K"
+            keySet={connections.radarr4k_api_key_set}
+            draft={connDrafts.radarr4k}
+            onChange={(d) => setConnDrafts((prev) => prev ? { ...prev, radarr4k: d } : prev)}
+            testResult={testResults?.['Radarr-4K']}
           />
           <div className="py-3">
             <button
@@ -104,16 +263,78 @@ export default function Settings() {
         </div>
       </Section>
 
+      {/* RDT-client */}
+      <Section title="RDT-client">
+        <div className="py-2">
+          <div className="flex items-center justify-between py-1.5 border-b border-[#2a2d3a]">
+            <span className="text-sm font-medium text-slate-200">RDT-client</span>
+            <label className="flex items-center gap-2 text-xs text-slate-400 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={connDrafts.rdt.enabled}
+                onChange={(e) => setConnDrafts((prev) => prev ? { ...prev, rdt: { ...prev.rdt, enabled: e.target.checked } } : prev)}
+                className="w-4 h-4 accent-indigo-500"
+              />
+              Enabled
+            </label>
+          </div>
+          <FieldRow label="Host">
+            <input
+              type="text"
+              value={connDrafts.rdt.host}
+              onChange={(e) => setConnDrafts((prev) => prev ? { ...prev, rdt: { ...prev.rdt, host: e.target.value } } : prev)}
+              placeholder="192.168.1.x"
+              className="w-48 px-2 py-1 text-sm bg-[#0f1117] border border-[#2a2d3a] rounded-lg text-slate-200 focus:outline-none focus:border-indigo-500 font-mono"
+            />
+          </FieldRow>
+          <FieldRow label="Port">
+            <input
+              type="number"
+              value={connDrafts.rdt.port}
+              onChange={(e) => setConnDrafts((prev) => prev ? { ...prev, rdt: { ...prev.rdt, port: Number(e.target.value) } } : prev)}
+              min={1}
+              max={65535}
+              className="w-24 px-2 py-1 text-sm bg-[#0f1117] border border-[#2a2d3a] rounded-lg text-slate-200 focus:outline-none focus:border-indigo-500 font-mono text-center"
+            />
+            {testResults?.['RDT-client'] !== undefined && (
+              <span className={`text-xs ${testResults['RDT-client'] ? 'text-green-400' : 'text-red-400'}`}>
+                {testResults['RDT-client'] ? 'OK' : 'Failed'}
+              </span>
+            )}
+          </FieldRow>
+          <FieldRow label="Username">
+            <input
+              type="text"
+              value={connDrafts.rdt.username}
+              onChange={(e) => setConnDrafts((prev) => prev ? { ...prev, rdt: { ...prev.rdt, username: e.target.value } } : prev)}
+              placeholder="username"
+              className="w-48 px-2 py-1 text-sm bg-[#0f1117] border border-[#2a2d3a] rounded-lg text-slate-200 focus:outline-none focus:border-indigo-500 font-mono"
+            />
+          </FieldRow>
+          <FieldRow label="Password">
+            <input
+              type="password"
+              value={connDrafts.rdt.password}
+              onChange={(e) => setConnDrafts((prev) => prev ? { ...prev, rdt: { ...prev.rdt, password: e.target.value } } : prev)}
+              placeholder={connections.rdt_password_set ? 'Set new password to change' : 'No password set'}
+              className="w-48 px-2 py-1 text-sm bg-[#0f1117] border border-[#2a2d3a] rounded-lg text-slate-200 focus:outline-none focus:border-indigo-500 font-mono placeholder:text-slate-600"
+            />
+            {connections.rdt_password_set && !connDrafts.rdt.password && (
+              <span className="text-xs text-slate-500">set</span>
+            )}
+          </FieldRow>
+        </div>
+      </Section>
+
       {/* Scheduler */}
       <Section title="Scheduler">
         <div className="py-1">
-          <Row label="Interval (minutes)" value={`${env.interval_minutes} (env var)`} />
           <div className="flex items-center justify-between py-2.5 border-b border-[#2a2d3a]">
             <span className="text-sm text-slate-400">Scheduler enabled</span>
             <input
               type="checkbox"
-              checked={draft.scheduler_enabled ?? db.scheduler_enabled}
-              onChange={(e) => setDraft((d) => ({ ...d, scheduler_enabled: e.target.checked }))}
+              checked={dbDraft.scheduler_enabled ?? db.scheduler_enabled}
+              onChange={(e) => setDbDraft((d) => ({ ...d, scheduler_enabled: e.target.checked }))}
               className="w-4 h-4 accent-indigo-500"
             />
           </div>
@@ -121,8 +342,8 @@ export default function Settings() {
             <span className="text-sm text-slate-400">Dry run mode</span>
             <input
               type="checkbox"
-              checked={draft.scheduler_dry_run ?? db.scheduler_dry_run}
-              onChange={(e) => setDraft((d) => ({ ...d, scheduler_dry_run: e.target.checked }))}
+              checked={dbDraft.scheduler_dry_run ?? db.scheduler_dry_run}
+              onChange={(e) => setDbDraft((d) => ({ ...d, scheduler_dry_run: e.target.checked }))}
               className="w-4 h-4 accent-indigo-500"
             />
           </div>
@@ -142,8 +363,8 @@ export default function Settings() {
               <input
                 type="number"
                 min={0}
-                value={(draft[key] as number) ?? def}
-                onChange={(e) => setDraft((d) => ({ ...d, [key]: Number(e.target.value) }))}
+                value={(dbDraft[key] as number) ?? def}
+                onChange={(e) => setDbDraft((d) => ({ ...d, [key]: Number(e.target.value) }))}
                 className="w-20 px-2 py-1 text-sm text-center bg-[#0f1117] border border-[#2a2d3a] rounded-lg text-slate-200 focus:outline-none focus:border-indigo-500"
               />
             </div>
@@ -155,9 +376,9 @@ export default function Settings() {
       <Section title="Notifications (Apprise URLs)">
         <div className="py-3">
           <textarea
-            value={(draft.notifications_apprise_urls ?? db.notifications_apprise_urls).join('\n')}
+            value={(dbDraft.notifications_apprise_urls ?? db.notifications_apprise_urls).join('\n')}
             onChange={(e) =>
-              setDraft((d) => ({
+              setDbDraft((d) => ({
                 ...d,
                 notifications_apprise_urls: e.target.value.split('\n').filter(Boolean),
               }))

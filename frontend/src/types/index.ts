@@ -73,7 +73,7 @@ export interface DbConfig {
   notifications_apprise_urls: string[]
 }
 
-export interface EnvConfig {
+export interface ConnectionConfig {
   sonarr_host: string
   sonarr_port: number
   sonarr_api_key_set: boolean
@@ -92,14 +92,37 @@ export interface EnvConfig {
   radarr4k_enabled: boolean
   rdt_host: string
   rdt_port: number
-  rdt_username_set: boolean
+  rdt_username: string
   rdt_password_set: boolean
   rdt_enabled: boolean
-  interval_minutes: number
+}
+
+export interface ConnectionConfigUpdate {
+  sonarr_host?: string
+  sonarr_port?: number
+  sonarr_api_key?: string
+  sonarr_enabled?: boolean
+  sonarr4k_host?: string
+  sonarr4k_port?: number
+  sonarr4k_api_key?: string
+  sonarr4k_enabled?: boolean
+  radarr_host?: string
+  radarr_port?: number
+  radarr_api_key?: string
+  radarr_enabled?: boolean
+  radarr4k_host?: string
+  radarr4k_port?: number
+  radarr4k_api_key?: string
+  radarr4k_enabled?: boolean
+  rdt_host?: string
+  rdt_port?: number
+  rdt_username?: string
+  rdt_password?: string
+  rdt_enabled?: boolean
 }
 
 export interface FullConfig {
-  env: EnvConfig
+  connections: ConnectionConfig
   db: DbConfig
 }
 

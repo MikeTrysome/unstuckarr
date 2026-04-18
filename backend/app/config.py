@@ -57,9 +57,6 @@ class Settings(BaseSettings):
     data_dir: str = "/data"
     interval_minutes: int = 10
 
-    # Auth — plain-text only at startup to seed the bcrypt hash; not stored after that
-    password: str = ""
-
     def get_arr_instances(self) -> list[ArrInstanceSettings]:
         return [
             ArrInstanceSettings(
