@@ -11,7 +11,7 @@
   <Category>Downloaders: Tools:</Category>
   <WebUI>http://[IP]:[PORT:7676]</WebUI>
   <TemplateURL>https://raw.githubusercontent.com/MikeTrysome/unstuckarr/main/unraid-template.xml</TemplateURL>
-  <Icon>https://raw.githubusercontent.com/MikeTrysome/unstuckarr/main/frontend/public/icon.svg</Icon>
+  <Icon>https://raw.githubusercontent.com/MikeTrysome/unstuckarr/main/frontend/public/icon.png</Icon>
   <ExtraParams>--restart=unless-stopped</ExtraParams>
   <DateInstalled/>
   <DonateText/>
