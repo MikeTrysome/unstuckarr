@@ -1,5 +1,6 @@
-import { NavLink } from 'react-router-dom'
-import { Activity, LayoutDashboard, List, ScrollText, Settings } from 'lucide-react'
+import { NavLink, useNavigate } from 'react-router-dom'
+import { Activity, LayoutDashboard, List, LogOut, ScrollText, Settings } from 'lucide-react'
+import { clearToken } from '../../lib/auth'
 
 const nav = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
@@ -10,6 +11,13 @@ const nav = [
 ]
 
 export function Sidebar() {
+  const navigate = useNavigate()
+
+  const handleLogout = () => {
+    clearToken()
+    navigate('/login')
+  }
+
   return (
     <aside className="w-56 shrink-0 bg-[#1a1d27] border-r border-[#2a2d3a] flex flex-col">
       <div className="px-5 py-5 border-b border-[#2a2d3a]">
@@ -41,8 +49,15 @@ export function Sidebar() {
         ))}
       </nav>
 
-      <div className="px-4 py-3 border-t border-[#2a2d3a]">
-        <p className="text-xs text-slate-500">v0.1.0</p>
+      <div className="px-3 py-3 border-t border-[#2a2d3a] flex flex-col gap-1">
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors w-full"
+        >
+          <LogOut size={16} />
+          Log out
+        </button>
+        <p className="text-xs text-slate-600 px-3">v0.1.0</p>
       </div>
     </aside>
   )
