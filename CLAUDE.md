@@ -16,7 +16,7 @@ unstuckarr/
 ├── backend/
 │   └── app/
 │       ├── main.py              # FastAPI app factory, lifespan, middleware
-│       ├── config.py            # Pydantic Settings (env prefix ARRSM_)
+│       ├── config.py            # Pydantic Settings (env prefix UNSTUCKARR_)
 │       ├── database.py          # SQLAlchemy engine, WAL mode, SessionLocal
 │       ├── scheduler.py         # APScheduler + run_in_executor + _job_running guard
 │       ├── adapters/
@@ -98,19 +98,19 @@ cd backend && python -m ruff check app/
 
 ---
 
-## Environment Variables (all prefixed `ARRSM_`)
+## Environment Variables (all prefixed `UNSTUCKARR_`)
 
 | Variable | Default | Notes |
 |---|---|---|
-| `ARRSM_SONARR_API_KEY` | `""` | Required for Sonarr |
-| `ARRSM_SONARR4K_API_KEY` | `""` | Required for Sonarr-4K |
-| `ARRSM_RADARR_API_KEY` | `""` | Required for Radarr |
-| `ARRSM_RADARR4K_API_KEY` | `""` | Required for Radarr-4K |
-| `ARRSM_RDT_USERNAME` | `""` | RDT-client login |
-| `ARRSM_RDT_PASSWORD` | `""` | RDT-client login |
-| `ARRSM_PASSWORD` | `""` | Web UI login (seeded to bcrypt, not stored) |
-| `ARRSM_INTERVAL_MINUTES` | `10` | Cleanup interval |
-| `ARRSM_DATA_DIR` | `/data` | SQLite directory |
+| `UNSTUCKARR_SONARR_API_KEY` | `""` | Required for Sonarr |
+| `UNSTUCKARR_SONARR4K_API_KEY` | `""` | Required for Sonarr-4K |
+| `UNSTUCKARR_RADARR_API_KEY` | `""` | Required for Radarr |
+| `UNSTUCKARR_RADARR4K_API_KEY` | `""` | Required for Radarr-4K |
+| `UNSTUCKARR_RDT_USERNAME` | `""` | RDT-client login |
+| `UNSTUCKARR_RDT_PASSWORD` | `""` | RDT-client login |
+| `UNSTUCKARR_PASSWORD` | `""` | Web UI login (seeded to bcrypt, not stored) |
+| `UNSTUCKARR_INTERVAL_MINUTES` | `10` | Cleanup interval |
+| `UNSTUCKARR_DATA_DIR` | `/data` | SQLite directory |
 
 ---
 
@@ -119,7 +119,7 @@ cd backend && python -m ruff check app/
 - **Scheduler:** `AsyncIOScheduler` with `_job_running` guard — overlapping runs are dropped, not queued
 - **Auth:** bcrypt password + JWT (HS256, 7-day expiry) — rate-limited login endpoint (10/min)
 - **Security headers:** `X-Frame-Options: DENY`, CSP, `X-Content-Type-Options: nosniff`
-- **No CORS in production** — same-origin only; CORS only when `ARRSM_CORS_ORIGINS` env var is set
+- **No CORS in production** — same-origin only; CORS only when `UNSTUCKARR_CORS_ORIGINS` env var is set
 - **WAL mode + foreign_keys=ON** on SQLite engine connect
 - **Notification:** Apprise (notification_service.py) — configured via Settings UI
 

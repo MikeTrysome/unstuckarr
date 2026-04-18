@@ -15,7 +15,7 @@ Secrets live in environment variables only. They are never:
 - Returned in API responses (mask with `***`)
 - Stored in the SQLite `config_entries` table
 
-The `ARRSM_PASSWORD` env var is consumed once at startup to seed bcrypt — after that it's not stored anywhere.
+The `UNSTUCKARR_PASSWORD` env var is consumed once at startup to seed bcrypt — after that it's not stored anywhere.
 
 ## Auth — Backend
 
@@ -50,7 +50,7 @@ Never write raw SQL strings. Use SQLAlchemy ORM or SQLAlchemy Core with bound pa
 
 ## CORS
 
-CORS is only enabled when `ARRSM_CORS_ORIGINS` is explicitly set. In production (Docker, same-origin), CORS is disabled. Do not enable wildcard CORS.
+CORS is only enabled when `UNSTUCKARR_CORS_ORIGINS` is explicitly set. In production (Docker, same-origin), CORS is disabled. Do not enable wildcard CORS.
 
 ## Security Headers
 

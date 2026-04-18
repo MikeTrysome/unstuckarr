@@ -7,7 +7,7 @@ so Claude Code can query live data and trigger actions during development.
 
 Configuration via environment variables:
   UNSTUCKARR_BASE_URL   default: http://localhost:7676
-  UNSTUCKARR_PASSWORD   password for the web UI (same as ARRSM_PASSWORD)
+  UNSTUCKARR_PASSWORD   password for the web UI (same as UNSTUCKARR_PASSWORD)
 
 Usage (add to .mcp.json):
   {

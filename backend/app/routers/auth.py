@@ -41,7 +41,7 @@ def login(request: Request, body: LoginRequest, db: Session = Depends(get_db)):
     if not password_hash:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="No password configured. Set ARRSM_PASSWORD and restart.",
+            detail="No password configured. Set UNSTUCKARR_PASSWORD and restart.",
         )
     if not auth.verify_password(body.password, password_hash):
         logger.warning("Failed login attempt from %s", request.client.host if request.client else "unknown")

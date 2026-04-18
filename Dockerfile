@@ -20,7 +20,7 @@ COPY backend/ ./
 # Copy built frontend into static/
 COPY --from=frontend-build /build/dist/ ./static/
 
-ENV ARRSM_DATA_DIR=/data
+ENV UNSTUCKARR_DATA_DIR=/data
 ENV STATIC_DIR=/app/static
 
 RUN useradd -m -u 1000 unstuckarr \

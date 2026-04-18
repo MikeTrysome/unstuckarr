@@ -20,7 +20,7 @@ class ArrInstanceSettings(BaseModel):
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="ARRSM_", case_sensitive=False)
+    model_config = SettingsConfigDict(env_prefix="UNSTUCKARR_", case_sensitive=False)
 
     # Sonarr
     sonarr_host: str = "192.168.1.135"
