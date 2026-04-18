@@ -30,3 +30,6 @@ build/
 .idea/
 .vscode/
 *.swp
+
+# MCP config contains secrets (GitHub token, passwords) — keep local only
+.mcp.json
