@@ -7,11 +7,12 @@ const ACTION_COLORS: Record<string, string> = {
   removed: 'text-green-400 bg-green-500/10 border-green-500/20',
   dry_run: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
   skipped: 'text-slate-400 bg-white/5 border-white/10',
+  strike:  'text-amber-400 bg-amber-500/10 border-amber-500/20',
   error: 'text-red-400 bg-red-500/10 border-red-500/20',
 }
 
 const INSTANCES = ['Sonarr', 'Sonarr-4K', 'Radarr', 'Radarr-4K']
-const ACTIONS = ['removed', 'dry_run', 'skipped', 'error']
+const ACTIONS = ['removed', 'dry_run', 'skipped', 'strike', 'error']
 
 export default function Events() {
   const [data, setData] = useState<EventListResponse | null>(null)
@@ -44,7 +45,7 @@ export default function Events() {
           <select
             value={filterInstance}
             onChange={(e) => { setFilterInstance(e.target.value); setPage(1) }}
-            className="px-3 py-1.5 text-sm bg-[#1a1d27] border border-[#2a2d3a] rounded-lg text-slate-300"
+            className="px-3 py-1.5 text-sm bg-[var(--bg-card)] border border-[var(--bd)] rounded-lg text-slate-300"
           >
             <option value="">All instances</option>
             {INSTANCES.map((i) => <option key={i} value={i}>{i}</option>)}
@@ -52,7 +53,7 @@ export default function Events() {
           <select
             value={filterAction}
             onChange={(e) => { setFilterAction(e.target.value); setPage(1) }}
-            className="px-3 py-1.5 text-sm bg-[#1a1d27] border border-[#2a2d3a] rounded-lg text-slate-300"
+            className="px-3 py-1.5 text-sm bg-[var(--bg-card)] border border-[var(--bd)] rounded-lg text-slate-300"
           >
             <option value="">All actions</option>
             {ACTIONS.map((a) => <option key={a} value={a}>{a}</option>)}
@@ -60,14 +61,14 @@ export default function Events() {
         </div>
       </div>
 
-      <div className="bg-[#1a1d27] rounded-xl border border-[#2a2d3a] overflow-hidden">
+      <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--bd)] overflow-hidden">
         {!data || data.items.length === 0 ? (
           <div className="p-12 text-center text-slate-400 text-sm">No events found</div>
         ) : (
           <>
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-[#2a2d3a]">
+                <tr className="border-b border-[var(--bd)]">
                   {['Time', 'Title', 'Instance', 'Error type', 'Action', 'Run'].map((h) => (
                     <th key={h} className="px-4 py-2.5 text-left text-xs text-slate-500 font-medium">{h}</th>
                   ))}
@@ -77,7 +78,7 @@ export default function Events() {
                 {data.items.map((ev) => {
                   const ac = ACTION_COLORS[ev.action] ?? ACTION_COLORS.skipped
                   return (
-                    <tr key={ev.id} className="border-b border-[#2a2d3a]/50 hover:bg-white/2">
+                    <tr key={ev.id} className="border-b border-[var(--bd)]/50 hover:bg-white/2">
                       <td className="px-4 py-2.5 text-xs text-slate-500 whitespace-nowrap">
                         {new Date(ev.timestamp).toLocaleString()}
                       </td>
@@ -100,7 +101,7 @@ export default function Events() {
               </tbody>
             </table>
 
-            <div className="px-4 py-3 border-t border-[#2a2d3a] flex items-center justify-between">
+            <div className="px-4 py-3 border-t border-[var(--bd)] flex items-center justify-between">
               <span className="text-xs text-slate-500">{data.total} events total</span>
               <div className="flex gap-2">
                 <button

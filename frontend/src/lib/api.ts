@@ -60,7 +60,11 @@ export const api = {
     update: (data: { connections?: ConnectionConfigUpdate; db?: Partial<DbConfig> }) =>
       req<FullConfig>('/config', { method: 'PUT', body: JSON.stringify(data) }),
     testAll: () => req<Record<string, boolean>>('/config/test-connection', { method: 'POST' }),
-    testOne: (name: string) => req<{ ok: boolean }>(`/config/test-connection/${encodeURIComponent(name)}`, { method: 'POST' }),
+    testOne: (name: string, creds?: { host?: string; port?: number; api_key?: string }) =>
+      req<{ ok: boolean }>(`/config/test-connection/${encodeURIComponent(name)}`, {
+        method: 'POST',
+        body: JSON.stringify(creds ?? {}),
+      }),
   },
 
   auth: {

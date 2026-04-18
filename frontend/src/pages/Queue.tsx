@@ -54,7 +54,7 @@ export default function Queue() {
           <select
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            className="px-3 py-1.5 text-sm bg-[#1a1d27] border border-[#2a2d3a] rounded-lg text-slate-300"
+            className="px-3 py-1.5 text-sm bg-[var(--bg-card)] border border-[var(--bd)] rounded-lg text-slate-300"
           >
             <option value="">All instances</option>
             {INSTANCES.map((i) => <option key={i} value={i}>{i}</option>)}
@@ -84,18 +84,18 @@ export default function Queue() {
           Loading...
         </div>
       ) : filtered.length === 0 ? (
-        <div className="bg-[#1a1d27] rounded-xl border border-[#2a2d3a] p-12 text-center">
+        <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--bd)] p-12 text-center">
           <p className="text-slate-400 text-sm">No stuck downloads found</p>
         </div>
       ) : (
-        <div className="bg-[#1a1d27] rounded-xl border border-[#2a2d3a] overflow-hidden">
-          <div className="px-4 py-3 border-b border-[#2a2d3a] flex items-center gap-2">
+        <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--bd)] overflow-hidden">
+          <div className="px-4 py-3 border-b border-[var(--bd)] flex items-center gap-2">
             <AlertTriangle size={14} className="text-amber-400" />
             <span className="text-sm text-slate-300">{filtered.length} stuck item(s)</span>
           </div>
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-[#2a2d3a]">
+              <tr className="border-b border-[var(--bd)]">
                 {['Title', 'Instance', 'Error type', 'Strikes', 'Hash', 'Added'].map((h) => (
                   <th key={h} className="px-4 py-2.5 text-left text-xs text-slate-500 font-medium">{h}</th>
                 ))}
@@ -109,7 +109,7 @@ export default function Queue() {
                   item.strike_count >= item.strike_threshold ? 'text-red-400' :
                   'text-amber-400'
                 return (
-                  <tr key={i} className="border-b border-[#2a2d3a]/50 hover:bg-white/2">
+                  <tr key={i} className="border-b border-[var(--bd)]/50 hover:bg-white/2">
                     <td className="px-4 py-3 text-slate-200 max-w-xs truncate" title={item.title}>
                       {item.title}
                     </td>

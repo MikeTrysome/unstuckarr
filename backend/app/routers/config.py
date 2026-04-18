@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Body, Depends
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.auth import require_auth
@@ -13,6 +14,14 @@ from app.schemas.config import (
 )
 from app.services import db_config
 from app.services.arr_service import ArrService
+
+
+class ConnectionTestBody(BaseModel):
+    """Optional override values for connection tests.
+    If a field is omitted or None the stored DB value is used instead."""
+    host: str | None = None
+    port: int | None = None
+    api_key: str | None = None
 
 router = APIRouter(prefix="/config", tags=["config"], dependencies=[Depends(require_auth)])
 
@@ -194,7 +203,11 @@ def test_connections(db: Session = Depends(get_db)):
 
 
 @router.post("/test-connection/{instance_name}")
-def test_one_connection(instance_name: str, db: Session = Depends(get_db)):
+def test_one_connection(
+    instance_name: str,
+    body: ConnectionTestBody = Body(default_factory=ConnectionTestBody),
+    db: Session = Depends(get_db),
+):
     if instance_name.lower() == "rdt":
         from app.adapters.rdt_adapter import RdtAdapter
         rdt_cfg = db_config.get_rdt_config_from_db(db)
@@ -211,6 +224,22 @@ def test_one_connection(instance_name: str, db: Session = Depends(get_db)):
 
     for inst in db_config.get_arr_instances_from_db(db):
         if inst.name.lower() == instance_name.lower():
+            # If caller provided override values, test with those instead of DB values.
+            # This lets the UI test credentials before the user has saved them.
+            if body.host or body.port is not None or body.api_key:
+                import httpx as _httpx
+                test_host = body.host or inst.host
+                test_port = body.port if body.port is not None else inst.port
+                test_key  = body.api_key or inst.api_key
+                try:
+                    resp = _httpx.get(
+                        f"http://{test_host}:{test_port}/api/v3/system/status",
+                        headers={"X-Api-Key": test_key or ""},
+                        timeout=15.0,
+                    )
+                    return {"ok": resp.status_code == 200}
+                except Exception:
+                    return {"ok": False}
             return {"ok": ArrService(inst).health_check()}
 
     from fastapi import HTTPException

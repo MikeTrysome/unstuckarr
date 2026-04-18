@@ -5,8 +5,11 @@ import Events from './pages/Events'
 import Login from './pages/Login'
 import Logs from './pages/Logs'
 import Queue from './pages/Queue'
-import Settings from './pages/Settings'
 import Setup from './pages/Setup'
+import Connections from './pages/settings/Connections'
+import Detection from './pages/settings/Detection'
+import Notifications from './pages/settings/Notifications'
+import Account from './pages/settings/Account'
 import { isAuthenticated } from './lib/auth'
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
@@ -31,7 +34,13 @@ export default function App() {
           <Route path="/queue" element={<Queue />} />
           <Route path="/events" element={<Events />} />
           <Route path="/logs" element={<Logs />} />
-          <Route path="/settings" element={<Settings />} />
+          {/* Settings routes */}
+          <Route path="/connections" element={<Connections />} />
+          <Route path="/detection" element={<Detection />} />
+          <Route path="/notifications" element={<Notifications />} />
+          <Route path="/account" element={<Account />} />
+          {/* Legacy redirect — old /settings URL */}
+          <Route path="/settings" element={<Navigate to="/connections" replace />} />
         </Route>
       </Routes>
     </BrowserRouter>

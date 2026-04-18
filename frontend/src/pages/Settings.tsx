@@ -98,7 +98,7 @@ function Tip({ text }: { text: string }) {
         <HelpCircle size={14} />
       </button>
       {show && (
-        <div className="absolute left-5 top-0 z-50 w-56 px-3 py-2 text-xs text-slate-300 bg-[#0f1117] border border-[#2a2d3a] rounded-lg shadow-xl pointer-events-none">
+        <div className="absolute left-5 top-0 z-50 w-56 px-3 py-2 text-xs text-slate-300 bg-[var(--bg-base)] border border-[var(--bd)] rounded-lg shadow-xl pointer-events-none">
           {text}
         </div>
       )}
@@ -119,8 +119,8 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
-      <div className="relative z-50 w-full max-w-md bg-[#1a1d27] rounded-xl border border-[#2a2d3a] shadow-2xl">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[#2a2d3a]">
+      <div className="relative z-50 w-full max-w-md bg-[var(--bg-card)] rounded-xl border border-[var(--bd)] shadow-2xl">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--bd)]">
           <h3 className="text-sm font-semibold text-white">{title}</h3>
           <button onClick={onClose} className="text-slate-500 hover:text-slate-300 transition-colors">
             <X size={16} />
@@ -136,7 +136,7 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
 
 function MField({ label, tooltip, children }: { label: string; tooltip?: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between py-2.5 border-b border-[#2a2d3a] last:border-0 gap-4">
+    <div className="flex items-center justify-between py-2.5 border-b border-[var(--bd)] last:border-0 gap-4">
       <div className="flex items-center gap-1.5 shrink-0">
         <span className="text-sm text-slate-400">{label}</span>
         {tooltip && <Tip text={tooltip} />}
@@ -146,8 +146,8 @@ function MField({ label, tooltip, children }: { label: string; tooltip?: string;
   )
 }
 
-const INPUT_CLS = 'w-48 px-2 py-1 text-sm bg-[#0f1117] border border-[#2a2d3a] rounded-lg text-slate-200 focus:outline-none focus:border-indigo-500 font-mono placeholder:text-slate-600'
-const PORT_CLS  = 'w-24 px-2 py-1 text-sm text-center bg-[#0f1117] border border-[#2a2d3a] rounded-lg text-slate-200 focus:outline-none focus:border-indigo-500 font-mono'
+const INPUT_CLS = 'w-48 px-2 py-1 text-sm bg-[var(--bg-base)] border border-[var(--bd)] rounded-lg text-slate-200 focus:outline-none focus:border-indigo-500 font-mono placeholder:text-slate-600'
+const PORT_CLS  = 'w-24 px-2 py-1 text-sm text-center bg-[var(--bg-base)] border border-[var(--bd)] rounded-lg text-slate-200 focus:outline-none focus:border-indigo-500 font-mono'
 
 // ─── ARR Edit Modal ───────────────────────────────────────────────────────────
 
@@ -166,7 +166,11 @@ function ArrModal({
 
   const test = async () => {
     setTestState('testing')
-    const res = await api.config.testOne(testKey).catch(() => null)
+    const res = await api.config.testOne(testKey, {
+      host: local.host || undefined,
+      port: local.port > 0 ? local.port : undefined,
+      api_key: local.api_key || undefined,
+    }).catch(() => null)
     setTestState(res?.ok ? 'ok' : 'fail')
   }
 
@@ -348,7 +352,7 @@ function InstanceCard({
 }) {
   const configured = isConfigured(draft)
   return (
-    <div className="bg-[#0f1117] rounded-xl border border-[#2a2d3a] p-4 flex items-center justify-between gap-4">
+    <div className="bg-[var(--bg-base)] rounded-xl border border-[var(--bd)] p-4 flex items-center justify-between gap-4">
       <div className="flex items-center gap-3 min-w-0">
         <div className={`w-2 h-2 rounded-full shrink-0 ${
           !configured ? 'bg-slate-600' :
@@ -458,7 +462,7 @@ export default function Settings() {
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-[#2a2d3a] -mb-1">
+      <div className="flex border-b border-[var(--bd)] -mb-1">
         <TabBtn active={activeTab === 'connections'}  onClick={() => setActiveTab('connections')}>Connections</TabBtn>
         <TabBtn active={activeTab === 'detection'}    onClick={() => setActiveTab('detection')}>Detection</TabBtn>
         <TabBtn active={activeTab === 'notifications'} onClick={() => setActiveTab('notifications')}>Notifications</TabBtn>
@@ -483,8 +487,8 @@ export default function Settings() {
       {activeTab === 'detection' && (
         <div className="space-y-4">
           {/* Scheduler */}
-          <div className="bg-[#1a1d27] rounded-xl border border-[#2a2d3a] overflow-hidden">
-            <div className="px-5 py-3 border-b border-[#2a2d3a]">
+          <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--bd)] overflow-hidden">
+            <div className="px-5 py-3 border-b border-[var(--bd)]">
               <h2 className="text-sm font-medium text-white">Scheduler</h2>
             </div>
             <div className="px-5">
@@ -494,7 +498,7 @@ export default function Settings() {
                 { key: 'scheduler_dry_run' as keyof DbConfig, label: 'Dry run mode',
                   tooltip: 'Log stuck items but do not actually remove them from ARR' },
               ].map(({ key, label, tooltip }) => (
-                <div key={key} className="flex items-center justify-between py-2.5 border-b border-[#2a2d3a] last:border-0">
+                <div key={key} className="flex items-center justify-between py-2.5 border-b border-[var(--bd)] last:border-0">
                   <div className="flex items-center gap-1.5">
                     <span className="text-sm text-slate-400">{label}</span>
                     <Tip text={tooltip} />
@@ -511,8 +515,8 @@ export default function Settings() {
           </div>
 
           {/* Thresholds */}
-          <div className="bg-[#1a1d27] rounded-xl border border-[#2a2d3a] overflow-hidden">
-            <div className="px-5 py-3 border-b border-[#2a2d3a]">
+          <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--bd)] overflow-hidden">
+            <div className="px-5 py-3 border-b border-[var(--bd)]">
               <h2 className="text-sm font-medium text-white">Detection thresholds</h2>
             </div>
             <div className="px-5">
@@ -527,7 +531,7 @@ export default function Settings() {
                   label: 'Min. retry count (RDT)',
                   tooltip: 'RDT-client must have retried the download at least this many times before Unstuckarr intervenes' },
               ].map(({ key, label, tooltip }) => (
-                <div key={key} className="flex items-center justify-between py-2.5 border-b border-[#2a2d3a] last:border-0 gap-4">
+                <div key={key} className="flex items-center justify-between py-2.5 border-b border-[var(--bd)] last:border-0 gap-4">
                   <div className="flex items-center gap-1.5">
                     <span className="text-sm text-slate-400">{label}</span>
                     <Tip text={tooltip} />
@@ -537,7 +541,7 @@ export default function Settings() {
                     min={0}
                     value={(dbDraft[key] as number) ?? (db[key] as number)}
                     onChange={(e) => setDbDraft((d) => ({ ...d, [key]: Number(e.target.value) }))}
-                    className="w-20 px-2 py-1 text-sm text-center bg-[#0f1117] border border-[#2a2d3a] rounded-lg text-slate-200 focus:outline-none focus:border-indigo-500"
+                    className="w-20 px-2 py-1 text-sm text-center bg-[var(--bg-base)] border border-[var(--bd)] rounded-lg text-slate-200 focus:outline-none focus:border-indigo-500"
                   />
                 </div>
               ))}
@@ -545,12 +549,12 @@ export default function Settings() {
           </div>
 
           {/* Strikes */}
-          <div className="bg-[#1a1d27] rounded-xl border border-[#2a2d3a] overflow-hidden">
-            <div className="px-5 py-3 border-b border-[#2a2d3a]">
+          <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--bd)] overflow-hidden">
+            <div className="px-5 py-3 border-b border-[var(--bd)]">
               <h2 className="text-sm font-medium text-white">Strikes</h2>
             </div>
             <div className="px-5">
-              <div className="flex items-center justify-between py-2.5 border-b border-[#2a2d3a]">
+              <div className="flex items-center justify-between py-2.5 border-b border-[var(--bd)]">
                 <div className="flex items-center gap-1.5">
                   <span className="text-sm text-slate-400">Strikes enabled</span>
                   <Tip text="When enabled, stuck downloads accumulate strikes across runs. Removal only happens once the threshold is reached. Prevents removing downloads that are only temporarily stuck." />
@@ -570,7 +574,7 @@ export default function Settings() {
                   label: 'Task canceled — strike threshold',
                   tooltip: 'Number of strikes before a "task canceled" download is removed. Default 3 = needs to be seen stuck across 3 separate runs before removal.' },
               ].map(({ key, label, tooltip }) => (
-                <div key={key} className="flex items-center justify-between py-2.5 border-b border-[#2a2d3a] last:border-0 gap-4">
+                <div key={key} className="flex items-center justify-between py-2.5 border-b border-[var(--bd)] last:border-0 gap-4">
                   <div className="flex items-center gap-1.5">
                     <span className="text-sm text-slate-400">{label}</span>
                     <Tip text={tooltip} />
@@ -580,7 +584,7 @@ export default function Settings() {
                     min={1}
                     value={(dbDraft[key] as number | undefined) ?? (db[key] as number)}
                     onChange={(e) => setDbDraft((d) => ({ ...d, [key]: Number(e.target.value) }))}
-                    className="w-20 px-2 py-1 text-sm text-center bg-[#0f1117] border border-[#2a2d3a] rounded-lg text-slate-200 focus:outline-none focus:border-indigo-500"
+                    className="w-20 px-2 py-1 text-sm text-center bg-[var(--bg-base)] border border-[var(--bd)] rounded-lg text-slate-200 focus:outline-none focus:border-indigo-500"
                   />
                 </div>
               ))}
@@ -602,8 +606,8 @@ export default function Settings() {
       {/* ── Notifications tab ── */}
       {activeTab === 'notifications' && (
         <div className="space-y-4">
-          <div className="bg-[#1a1d27] rounded-xl border border-[#2a2d3a] overflow-hidden">
-            <div className="px-5 py-3 border-b border-[#2a2d3a]">
+          <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--bd)] overflow-hidden">
+            <div className="px-5 py-3 border-b border-[var(--bd)]">
               <h2 className="text-sm font-medium text-white">Apprise URLs</h2>
             </div>
             <div className="px-5 py-4 space-y-3">
@@ -623,7 +627,7 @@ export default function Settings() {
                   'discord://webhook_id/token\nntfy://topic\ntelegram://token/chat_id'
                 }
                 rows={5}
-                className="w-full px-3 py-2 text-sm font-mono bg-[#0f1117] border border-[#2a2d3a] rounded-lg text-slate-200 focus:outline-none focus:border-indigo-500 resize-none placeholder:text-slate-600"
+                className="w-full px-3 py-2 text-sm font-mono bg-[var(--bg-base)] border border-[var(--bd)] rounded-lg text-slate-200 focus:outline-none focus:border-indigo-500 resize-none placeholder:text-slate-600"
               />
               <p className="text-xs text-slate-500">
                 Full list of supported services:{' '}

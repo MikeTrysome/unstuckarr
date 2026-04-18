@@ -32,7 +32,7 @@ export default function Logs() {
         </div>
       </div>
 
-      <div className="flex-1 bg-[#1a1d27] rounded-xl border border-[#2a2d3a] overflow-hidden flex flex-col">
+      <div className="flex-1 bg-[var(--bg-card)] rounded-xl border border-[var(--bd)] overflow-hidden flex flex-col">
         <div className="flex-1 overflow-y-auto p-4 font-mono text-xs space-y-0.5">
           {messages.length === 0 ? (
             <p className="text-slate-500 text-center mt-8">

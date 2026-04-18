@@ -3,11 +3,23 @@
 @layer base {
   :root {
     color-scheme: dark;
+    /* Dark theme (default) */
+    --bg-base: #0f1117;
+    --bg-card: #1a1d27;
+    --bd: #2a2d3a;
+  }
+
+  :root.light {
+    color-scheme: light;
+    /* Light theme */
+    --bg-base: #f8fafc;
+    --bg-card: #ffffff;
+    --bd: #e2e8f0;
   }
 
   body {
     margin: 0;
-    background-color: #0f1117;
+    background-color: var(--bg-base);
     color: #e2e8f0;
     font-family: system-ui, 'Segoe UI', sans-serif;
     -webkit-font-smoothing: antialiased;
@@ -16,7 +28,42 @@
   * { box-sizing: border-box; }
 
   ::-webkit-scrollbar { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-track { background: #0f1117; }
-  ::-webkit-scrollbar-thumb { background: #2a2d3a; border-radius: 3px; }
+  ::-webkit-scrollbar-track { background: var(--bg-base); }
+  ::-webkit-scrollbar-thumb { background: var(--bd); border-radius: 3px; }
   ::-webkit-scrollbar-thumb:hover { background: #3a3d4a; }
 }
+
+/* ── Light mode overrides ─────────────────────────────────────────────────────
+   These use 2-class specificity (.light + utility) which beats the 1-class
+   Tailwind rule without needing !important.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+.light body { color: #1e293b; }
+
+/* Text */
+.light .text-white   { color: #0f172a; }
+.light .text-slate-200 { color: #334155; }
+.light .text-slate-300 { color: #475569; }
+.light .text-slate-400 { color: #64748b; }
+.light .text-slate-500 { color: #94a3b8; }
+.light .text-slate-600 { color: #94a3b8; }
+
+/* Opacity-based white backgrounds → flip to dark-on-light equivalents */
+.light .bg-white\/5  { background-color: rgba(0, 0, 0, 0.04); }
+.light .bg-white\/10 { background-color: rgba(0, 0, 0, 0.07); }
+.light .bg-white\/2  { background-color: rgba(0, 0, 0, 0.02); }
+.light .bg-white\/3  { background-color: rgba(0, 0, 0, 0.03); }
+
+.light .hover\:bg-white\/5:hover  { background-color: rgba(0, 0, 0, 0.04); }
+.light .hover\:bg-white\/10:hover { background-color: rgba(0, 0, 0, 0.07); }
+.light .hover\:bg-white\/3:hover  { background-color: rgba(0, 0, 0, 0.03); }
+.light .hover\:bg-white\/2:hover  { background-color: rgba(0, 0, 0, 0.02); }
+
+/* Opacity-based borders */
+.light .border-white\/10 { border-color: rgba(0, 0, 0, 0.1); }
+
+/* Skipped/other action badges need visible bg in light mode */
+.light .bg-white\/5.border-white\/10 { background-color: rgba(0, 0, 0, 0.04); }
+
+/* Hover row highlight in tables */
+.light .hover\:bg-white\/2:hover { background-color: rgba(0, 0, 0, 0.03); }

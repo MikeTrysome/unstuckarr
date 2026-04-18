@@ -6,7 +6,7 @@ import { CheckCircle, RefreshCw, XCircle } from 'lucide-react'
 
 function StatCard({ label, value, sub, color }: { label: string; value: string | number; sub?: string; color?: string }) {
   return (
-    <div className="bg-[#1a1d27] rounded-xl border border-[#2a2d3a] p-5">
+    <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--bd)] p-5">
       <p className="text-sm text-slate-400">{label}</p>
       <p className={`text-3xl font-bold mt-1 ${color ?? 'text-white'}`}>{value}</p>
       {sub && <p className="text-xs text-slate-500 mt-1">{sub}</p>}
@@ -101,7 +101,7 @@ export default function Dashboard() {
           {INSTANCES.map((name) => {
             const inst = data.by_instance[name] ?? { removed: 0, dry_run: 0 }
             return (
-              <div key={name} className="bg-[#1a1d27] rounded-xl border border-[#2a2d3a] p-4">
+              <div key={name} className="bg-[var(--bg-card)] rounded-xl border border-[var(--bd)] p-4">
                 <p className="text-sm font-medium text-white">{name}</p>
                 <div className="mt-2 space-y-1">
                   <div className="flex justify-between text-xs">
@@ -121,7 +121,7 @@ export default function Dashboard() {
 
       {/* Last run detail */}
       {lastRun?.run_id && (
-        <div className="bg-[#1a1d27] rounded-xl border border-[#2a2d3a] p-5">
+        <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--bd)] p-5">
           <div className="flex items-center gap-2 mb-3">
             {statusIcon}
             <h2 className="text-sm font-medium text-white">Last run</h2>

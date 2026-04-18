@@ -36,4 +36,6 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 VOLUME ["/data"]
 EXPOSE 7676
 
+LABEL net.unraid.docker.icon="https://raw.githubusercontent.com/MikeTrysome/unstuckarr/main/frontend/public/favicon.svg"
+
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]

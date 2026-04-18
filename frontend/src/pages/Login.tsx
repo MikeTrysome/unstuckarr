@@ -34,7 +34,7 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0f1117] flex items-center justify-center">
+    <div className="min-h-screen bg-[var(--bg-base)] flex items-center justify-center">
       <div className="w-full max-w-sm">
         <div className="flex items-center justify-center gap-3 mb-8">
           <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center">
@@ -45,7 +45,7 @@ export default function Login() {
 
         <form
           onSubmit={submit}
-          className="bg-[#1a1d27] rounded-2xl border border-[#2a2d3a] p-6 space-y-4"
+          className="bg-[var(--bg-card)] rounded-2xl border border-[var(--bd)] p-6 space-y-4"
         >
           <h1 className="text-base font-medium text-white">Sign in</h1>
 
@@ -57,7 +57,7 @@ export default function Login() {
               onChange={(e) => setUsername(e.target.value)}
               autoFocus
               autoComplete="username"
-              className="w-full px-3 py-2 bg-[#0f1117] border border-[#2a2d3a] rounded-lg text-slate-200 text-sm focus:outline-none focus:border-indigo-500 transition-colors"
+              className="w-full px-3 py-2 bg-[var(--bg-base)] border border-[var(--bd)] rounded-lg text-slate-200 text-sm focus:outline-none focus:border-indigo-500 transition-colors"
               placeholder="username"
             />
           </div>
@@ -69,7 +69,7 @@ export default function Login() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="current-password"
-              className="w-full px-3 py-2 bg-[#0f1117] border border-[#2a2d3a] rounded-lg text-slate-200 text-sm focus:outline-none focus:border-indigo-500 transition-colors"
+              className="w-full px-3 py-2 bg-[var(--bg-base)] border border-[var(--bd)] rounded-lg text-slate-200 text-sm focus:outline-none focus:border-indigo-500 transition-colors"
               placeholder="••••••••"
             />
           </div>
