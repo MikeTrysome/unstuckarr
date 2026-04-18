@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api } from '../../lib/api'
 import type { DbConfig } from '../../types'
-import { MField, NUMBER_CLS, PageHeader, SectionCard, Tip } from '../../components/settings/shared'
+import { NUMBER_CLS, PageHeader, SectionCard, Tip } from '../../components/settings/shared'
 
 export default function Detection() {
   const [db, setDb]         = useState<DbConfig | null>(null)

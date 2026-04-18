@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { CheckCircle, Pencil, XCircle } from 'lucide-react'
 import { api } from '../../lib/api'
 import type { ConnectionConfig, ConnectionConfigUpdate, FullConfig } from '../../types'
-import { INPUT_CLS, MField, Modal, PageHeader, PORT_CLS, SectionCard, Tip } from '../../components/settings/shared'
+import { INPUT_CLS, MField, Modal, PageHeader, PORT_CLS } from '../../components/settings/shared'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
