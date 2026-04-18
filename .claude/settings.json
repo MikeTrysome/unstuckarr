@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+
+  "permissions": {
+    "allow": [
+      "Bash(git *)",
+      "Bash(pytest *)",
+      "Bash(python -m pytest *)",
+      "Bash(python -m black *)",
+      "Bash(python -m ruff *)",
+      "Bash(docker compose *)",
+      "Bash(docker compose *)",
+      "Bash(npm run *)",
+      "Bash(npm install*)",
+      "Bash(npx *)"
+    ],
+    "deny": [
+      "Bash(curl * | bash)",
+      "Bash(curl * | sh)",
+      "Bash(wget * | bash)",
+      "Bash(sudo rm -rf *)",
+      "Bash(rm -rf /)"
+    ],
+    "ask": [
+      "Bash(git push *)",
+      "Bash(docker compose down*)"
+    ]
+  },
+
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/post_edit_format.py\""
+          }
+        ]
+      }
+    ],
+
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python -c \"import sys,json; d=json.load(sys.stdin); cmd=d.get('tool_input',{}).get('command','').lower(); bad=any(x in cmd for x in ['drop table','truncate table','delete from','pragma journal_mode=delete']); bad and sys.stderr.write('Direct destructive SQL blocked by hook\\n'); exit(2 if bad else 0)\""
+          }
+        ]
+      }
+    ],
+
+    "PreToolUse/git-push": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python -c \"import sys,json; d=json.load(sys.stdin); cmd=d.get('tool_input',{}).get('command',''); exit(0) if 'git push' not in cmd else print('[hook] Pushing to GitHub triggers Docker Hub build. Make sure changes are committed and tested.') or exit(0)\""
+          }
+        ]
+      }
+    ],
+
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python -c \"print('Project: Unstuckarr (FastAPI+React Docker, port 7676). GitHub: MikeTrysome/unstuckarr. Docker Hub: dockersftw/unstuckarr. MCP tools: arr-stack (rdt_get_stuck_torrents, arr_get_queue etc). Rules: datetime.now(timezone.utc) always, toLocaleString() no locale param, all logs in English, cleanup_service only via run_in_executor.')\""
+          }
+        ]
+      }
+    ]
+  }
+}
