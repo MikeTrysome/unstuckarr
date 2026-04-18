@@ -30,6 +30,8 @@ export interface StuckItem {
   error_message: string
   added_at: string | null
   retry_count: number
+  strike_count: number
+  strike_threshold: number
 }
 
 export interface Run {
@@ -71,6 +73,9 @@ export interface DbConfig {
   scheduler_dry_run: boolean
   scheduler_enabled: boolean
   notifications_apprise_urls: string[]
+  strikes_enabled: boolean
+  strikes_infringing_threshold: number
+  strikes_canceled_threshold: number
 }
 
 export interface ConnectionConfig {

@@ -544,6 +544,49 @@ export default function Settings() {
             </div>
           </div>
 
+          {/* Strikes */}
+          <div className="bg-[#1a1d27] rounded-xl border border-[#2a2d3a] overflow-hidden">
+            <div className="px-5 py-3 border-b border-[#2a2d3a]">
+              <h2 className="text-sm font-medium text-white">Strikes</h2>
+            </div>
+            <div className="px-5">
+              <div className="flex items-center justify-between py-2.5 border-b border-[#2a2d3a]">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-sm text-slate-400">Strikes enabled</span>
+                  <Tip text="When enabled, stuck downloads accumulate strikes across runs. Removal only happens once the threshold is reached. Prevents removing downloads that are only temporarily stuck." />
+                </div>
+                <input
+                  type="checkbox"
+                  checked={(dbDraft.strikes_enabled as boolean | undefined) ?? db.strikes_enabled}
+                  onChange={(e) => setDbDraft((d) => ({ ...d, strikes_enabled: e.target.checked }))}
+                  className="w-4 h-4 accent-indigo-500"
+                />
+              </div>
+              {[
+                { key: 'strikes_infringing_threshold' as keyof DbConfig,
+                  label: 'Infringing file — strike threshold',
+                  tooltip: 'Number of strikes before an "infringing file" download is removed. Default 1 = remove on first detection (these errors are always permanent).' },
+                { key: 'strikes_canceled_threshold' as keyof DbConfig,
+                  label: 'Task canceled — strike threshold',
+                  tooltip: 'Number of strikes before a "task canceled" download is removed. Default 3 = needs to be seen stuck across 3 separate runs before removal.' },
+              ].map(({ key, label, tooltip }) => (
+                <div key={key} className="flex items-center justify-between py-2.5 border-b border-[#2a2d3a] last:border-0 gap-4">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm text-slate-400">{label}</span>
+                    <Tip text={tooltip} />
+                  </div>
+                  <input
+                    type="number"
+                    min={1}
+                    value={(dbDraft[key] as number | undefined) ?? (db[key] as number)}
+                    onChange={(e) => setDbDraft((d) => ({ ...d, [key]: Number(e.target.value) }))}
+                    className="w-20 px-2 py-1 text-sm text-center bg-[#0f1117] border border-[#2a2d3a] rounded-lg text-slate-200 focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
           <div className="flex items-center gap-3">
             <button
               onClick={() => saveAll(connDrafts, dbDraft)}

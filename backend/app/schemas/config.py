@@ -8,6 +8,9 @@ class DbConfigOut(BaseModel):
     scheduler_dry_run: bool
     scheduler_enabled: bool
     notifications_apprise_urls: list[str]
+    strikes_enabled: bool
+    strikes_infringing_threshold: int
+    strikes_canceled_threshold: int
 
 
 class DbConfigIn(BaseModel):
@@ -17,6 +20,9 @@ class DbConfigIn(BaseModel):
     scheduler_dry_run: bool | None = None
     scheduler_enabled: bool | None = None
     notifications_apprise_urls: list[str] | None = Field(None, max_length=20)
+    strikes_enabled: bool | None = None
+    strikes_infringing_threshold: int | None = Field(None, ge=1, le=100)
+    strikes_canceled_threshold: int | None = Field(None, ge=1, le=100)
 
 
 class ConnectionConfigOut(BaseModel):

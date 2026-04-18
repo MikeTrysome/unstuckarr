@@ -12,6 +12,8 @@ class StuckItemOut(UtcModel):
     error_message: str
     added_at: datetime | None
     retry_count: int
+    strike_count: int = 0
+    strike_threshold: int = 1
 
 
 class RunOut(UtcModel):

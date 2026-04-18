@@ -68,6 +68,9 @@ def _build_db_out(db: Session) -> DbConfigOut:
         scheduler_dry_run=cfg["scheduler.dry_run"],
         scheduler_enabled=cfg["scheduler.enabled"],
         notifications_apprise_urls=cfg["notifications.apprise_urls"],
+        strikes_enabled=cfg["strikes.enabled"],
+        strikes_infringing_threshold=cfg["strikes.infringing_threshold"],
+        strikes_canceled_threshold=cfg["strikes.canceled_threshold"],
     )
 
 
@@ -155,6 +158,12 @@ def update_config(body: FullConfigIn, db: Session = Depends(get_db)):
             updates["scheduler.enabled"] = d.scheduler_enabled
         if d.notifications_apprise_urls is not None:
             updates["notifications.apprise_urls"] = d.notifications_apprise_urls
+        if d.strikes_enabled is not None:
+            updates["strikes.enabled"] = d.strikes_enabled
+        if d.strikes_infringing_threshold is not None:
+            updates["strikes.infringing_threshold"] = d.strikes_infringing_threshold
+        if d.strikes_canceled_threshold is not None:
+            updates["strikes.canceled_threshold"] = d.strikes_canceled_threshold
         if updates:
             db_config.update_many(db, updates)
 

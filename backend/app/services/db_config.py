@@ -32,6 +32,9 @@ DEFAULTS: dict[str, Any] = {
     "scheduler.dry_run": False,
     "scheduler.enabled": True,
     "notifications.apprise_urls": [],
+    "strikes.enabled": True,
+    "strikes.infringing_threshold": 1,   # remove immediately on first strike
+    "strikes.canceled_threshold": 3,     # require 3 strikes before removing
     # Connection config (DB-first, env var seeded on startup)
     "connection.sonarr.host": "",
     "connection.sonarr.port": 8989,

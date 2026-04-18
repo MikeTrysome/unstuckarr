@@ -14,6 +14,7 @@ from app.adapters.rdt_adapter import RdtAdapter
 from app.database import SessionLocal
 from app.models.event import CleanupEvent
 from app.models.run import SchedulerRun
+from app.models.strike import DownloadStrike
 from app.services import db_config
 from app.services.arr_service import ArrService
 from app.services.detection import DetectionConfig, find_stuck_items
@@ -26,6 +27,41 @@ def _utcnow() -> datetime:
 
 def _log(level: str, msg: str, run_id: str | None = None):
     broadcaster.emit_sync(level, msg, run_id=run_id)
+
+
+def _increment_strike(db: Session, download_hash: str, instance_name: str, error_type: str) -> int:
+    """Increment (or create) the strike counter for a download. Returns new count."""
+    strike = db.query(DownloadStrike).filter_by(
+        download_hash=download_hash, instance_name=instance_name
+    ).first()
+    if strike is None:
+        strike = DownloadStrike(
+            download_hash=download_hash,
+            instance_name=instance_name,
+            error_type=error_type,
+            strike_count=1,
+        )
+        db.add(strike)
+    else:
+        strike.strike_count += 1
+        strike.last_seen_at = _utcnow()
+        strike.error_type = error_type
+    db.commit()
+    return strike.strike_count
+
+
+def _delete_strike(db: Session, download_hash: str, instance_name: str) -> None:
+    """Remove strike record after a successful removal."""
+    db.query(DownloadStrike).filter_by(
+        download_hash=download_hash, instance_name=instance_name
+    ).delete()
+    db.commit()
+
+
+def _get_strike_threshold(db: Session, error_type: str) -> int:
+    if error_type == "infringing_file":
+        return db_config.get(db, "strikes.infringing_threshold")
+    return db_config.get(db, "strikes.canceled_threshold")
 
 
 def _build_detection_config(db: Session) -> DetectionConfig:
@@ -66,6 +102,7 @@ def run_cleanup(dry_run: bool | None = None, triggered_by: str = "scheduler") ->
         _log("INFO", f"{'[DRY-RUN] ' if dry_run else ''}Cleanup started (run_id={run_id})", run_id=run_id)
 
         detection_cfg = _build_detection_config(db)
+        strikes_enabled = db_config.get(db, "strikes.enabled")
         total_checked = 0
         total_stuck = 0
         total_removed = 0       # actual removals (live run)
@@ -122,6 +159,8 @@ def run_cleanup(dry_run: bool | None = None, triggered_by: str = "scheduler") ->
                 title = arr_item.get("title", "?")
                 hash_ = str(arr_item.get("downloadId", "?"))[:16]
 
+                download_hash = (arr_item.get("downloadId") or "").lower() or None
+
                 _log(
                     "INFO",
                     f"→ '{title[:60]}' | id={item_id} | hash={hash_}... | error={stuck.error_type!r}",
@@ -131,11 +170,33 @@ def run_cleanup(dry_run: bool | None = None, triggered_by: str = "scheduler") ->
                 action = "dry_run" if dry_run else "removed"
                 search_type = None
 
-                if not dry_run and item_id:
+                # ── Strike logic ──────────────────────────────────────────────
+                skip_removal = False
+                if strikes_enabled and not dry_run and download_hash:
+                    strike_count = _increment_strike(db, download_hash, instance.name, stuck.error_type)
+                    threshold = _get_strike_threshold(db, stuck.error_type)
+                    if strike_count < threshold:
+                        _log(
+                            "INFO",
+                            f"Strike {strike_count}/{threshold} — threshold not reached, skipping removal",
+                            run_id=run_id,
+                        )
+                        action = "strike"
+                        skip_removal = True
+                    else:
+                        _log(
+                            "INFO",
+                            f"Strike threshold reached ({strike_count}/{threshold}) — removing",
+                            run_id=run_id,
+                        )
+
+                if not skip_removal and not dry_run and item_id:
                     try:
                         arr.delete_queue_item(item_id)
                         total_removed += 1
                         _log("INFO", f"Removed: {instance.name} item {item_id}", run_id=run_id)
+                        if download_hash:
+                            _delete_strike(db, download_hash, instance.name)
                     except Exception as exc:
                         _log("ERROR", f"Remove failed: {exc}", run_id=run_id)
                         action = "error"
@@ -148,7 +209,7 @@ def run_cleanup(dry_run: bool | None = None, triggered_by: str = "scheduler") ->
                         instance_name=instance.name,
                         arr_queue_id=item_id,
                         title=title,
-                        download_hash=(arr_item.get("downloadId") or "").lower() or None,
+                        download_hash=download_hash,
                         error_type=stuck.error_type,
                         error_message=stuck.error_message,
                         action=action,

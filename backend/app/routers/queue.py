@@ -6,6 +6,7 @@ _VALID_INSTANCES = {"Sonarr", "Sonarr-4K", "Radarr", "Radarr-4K"}
 from app.adapters.rdt_adapter import RdtAdapter
 from app.auth import require_auth
 from app.database import get_db
+from app.models.strike import DownloadStrike
 from app.schemas.queue import StuckItemOut
 from app.services import db_config
 from app.services.arr_service import ArrService
@@ -67,18 +68,40 @@ def get_stuck_queue(
             # Single instance failure should not block other instances
             continue
 
+        # Resolve strike thresholds once per instance loop
+        infringing_threshold = db_config.get(db, "strikes.infringing_threshold")
+        canceled_threshold   = db_config.get(db, "strikes.canceled_threshold")
+
         stuck = find_stuck_items(records, rdt_index, use_rdt, detection_cfg)
         for s in stuck:
             rdt = s.rdt_torrent
+            hash_ = (s.arr_item.get("downloadId") or "").lower() or None
+
+            # Look up current strike count
+            strike_count = 0
+            if hash_:
+                strike_row = db.query(DownloadStrike).filter_by(
+                    download_hash=hash_, instance_name=inst.name
+                ).first()
+                if strike_row:
+                    strike_count = strike_row.strike_count
+
+            threshold = (
+                infringing_threshold if s.error_type == "infringing_file"
+                else canceled_threshold
+            )
+
             results.append(StuckItemOut(
                 arr_queue_id=s.arr_item.get("id"),
                 title=s.arr_item.get("title", "?"),
                 instance_name=inst.name,
-                download_hash=(s.arr_item.get("downloadId") or "").lower() or None,
+                download_hash=hash_,
                 error_type=s.error_type,
                 error_message=s.error_message,
                 added_at=rdt.added_at if rdt else None,
                 retry_count=rdt.retry_count if rdt else 0,
+                strike_count=strike_count,
+                strike_threshold=threshold,
             ))
 
     return results

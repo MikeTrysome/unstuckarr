@@ -96,7 +96,7 @@ export default function Queue() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-[#2a2d3a]">
-                {['Title', 'Instance', 'Error type', 'Hash', 'Retries', 'Added'].map((h) => (
+                {['Title', 'Instance', 'Error type', 'Strikes', 'Hash', 'Added'].map((h) => (
                   <th key={h} className="px-4 py-2.5 text-left text-xs text-slate-500 font-medium">{h}</th>
                 ))}
               </tr>
@@ -104,6 +104,10 @@ export default function Queue() {
             <tbody>
               {filtered.map((item, i) => {
                 const err = ERROR_LABELS[item.error_type] ?? ERROR_LABELS.other
+                const strikeColor =
+                  item.strike_count === 0 ? 'text-slate-500' :
+                  item.strike_count >= item.strike_threshold ? 'text-red-400' :
+                  'text-amber-400'
                 return (
                   <tr key={i} className="border-b border-[#2a2d3a]/50 hover:bg-white/2">
                     <td className="px-4 py-3 text-slate-200 max-w-xs truncate" title={item.title}>
@@ -115,10 +119,12 @@ export default function Queue() {
                         {err.label}
                       </span>
                     </td>
-                    <td className="px-4 py-3 font-mono text-xs text-slate-500">
-                      {item.download_hash?.slice(0, 12) ?? '—'}...
+                    <td className={`px-4 py-3 text-sm font-medium ${strikeColor}`}>
+                      {item.strike_count}/{item.strike_threshold}
                     </td>
-                    <td className="px-4 py-3 text-slate-400">{item.retry_count}</td>
+                    <td className="px-4 py-3 font-mono text-xs text-slate-500">
+                      {item.download_hash?.slice(0, 12) ?? '—'}…
+                    </td>
                     <td className="px-4 py-3 text-slate-500 text-xs">
                       {item.added_at ? new Date(item.added_at).toLocaleString() : '—'}
                     </td>

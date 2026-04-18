@@ -36,5 +36,5 @@ def get_db():
 
 
 def init_db():
-    from app.models import event, config, run  # noqa: F401 – ensures models are registered
+    from app.models import event, config, run, strike  # noqa: F401 – ensures models are registered
     Base.metadata.create_all(bind=engine)
