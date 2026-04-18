@@ -23,13 +23,17 @@ COPY --from=frontend-build /build/dist/ ./static/
 ENV UNSTUCKARR_DATA_DIR=/data
 ENV STATIC_DIR=/app/static
 
-RUN useradd -m -u 1000 unstuckarr \
+RUN apt-get update && apt-get install -y --no-install-recommends su-exec \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd -m -u 1000 unstuckarr \
     && mkdir -p /data \
-    && chmod 700 /data \
+    && chmod 755 /data \
     && chown -R unstuckarr:unstuckarr /app /data
-USER unstuckarr
+
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 VOLUME ["/data"]
 EXPOSE 7676
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "7676"]
+ENTRYPOINT ["docker-entrypoint.sh"]
