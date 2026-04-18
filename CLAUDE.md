@@ -102,13 +102,13 @@ cd backend && python -m ruff check app/
 
 | Variable | Default | Notes |
 |---|---|---|
-| `UNSTUCKARR_SONARR_HOST` | `192.168.1.135` | Seeds DB on first start; edit via Settings UI |
+| `UNSTUCKARR_SONARR_HOST` | `192.168.1.x` | Seeds DB on first start; edit via Settings UI |
 | `UNSTUCKARR_SONARR_PORT` | `8989` | Seeds DB on first start |
 | `UNSTUCKARR_SONARR_API_KEY` | `""` | Seeds DB (encrypted) on first start |
 | `UNSTUCKARR_SONARR4K_*` | | Same pattern |
 | `UNSTUCKARR_RADARR_*` | | Same pattern |
 | `UNSTUCKARR_RADARR4K_*` | | Same pattern |
-| `UNSTUCKARR_RDT_HOST` | `192.168.1.135` | Seeds DB on first start |
+| `UNSTUCKARR_RDT_HOST` | `192.168.1.x` | Seeds DB on first start |
 | `UNSTUCKARR_RDT_PORT` | `6500` | Seeds DB on first start |
 | `UNSTUCKARR_RDT_USERNAME` | `""` | Seeds DB on first start |
 | `UNSTUCKARR_RDT_PASSWORD` | `""` | Seeds DB (encrypted) on first start |
@@ -144,7 +144,7 @@ Encryption key: `{DATA_DIR}/.secret_key` (generated on first start). Never expos
 | Radarr-4K | 7879 |
 | RDT-client | 6500 |
 
-All on `192.168.1.135`.
+All on `192.168.1.x`.
 
 ---
 

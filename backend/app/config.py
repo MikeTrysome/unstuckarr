@@ -23,31 +23,31 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="UNSTUCKARR_", case_sensitive=False)
 
     # Sonarr
-    sonarr_host: str = "192.168.1.135"
+    sonarr_host: str = ""
     sonarr_port: int = 8989
     sonarr_api_key: str = ""
     sonarr_enabled: bool = True
 
     # Sonarr 4K
-    sonarr4k_host: str = "192.168.1.135"
+    sonarr4k_host: str = ""
     sonarr4k_port: int = 8990
     sonarr4k_api_key: str = ""
     sonarr4k_enabled: bool = True
 
     # Radarr
-    radarr_host: str = "192.168.1.135"
+    radarr_host: str = ""
     radarr_port: int = 7878
     radarr_api_key: str = ""
     radarr_enabled: bool = True
 
     # Radarr 4K
-    radarr4k_host: str = "192.168.1.135"
+    radarr4k_host: str = ""
     radarr4k_port: int = 7879
     radarr4k_api_key: str = ""
     radarr4k_enabled: bool = True
 
     # RDT-client
-    rdt_host: str = "192.168.1.135"
+    rdt_host: str = ""
     rdt_port: int = 6500
     rdt_username: str = ""
     rdt_password: str = ""
