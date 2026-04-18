@@ -6,4 +6,4 @@ if [ "$(stat -c %u /data)" != "1000" ]; then
     chown -R unstuckarr:unstuckarr /data
 fi
 
-exec su-exec unstuckarr uvicorn app.main:app --host 0.0.0.0 --port 7676
+exec gosu unstuckarr uvicorn app.main:app --host 0.0.0.0 --port 7676

@@ -23,7 +23,7 @@ COPY --from=frontend-build /build/dist/ ./static/
 ENV UNSTUCKARR_DATA_DIR=/data
 ENV STATIC_DIR=/app/static
 
-RUN apt-get update && apt-get install -y --no-install-recommends su-exec \
+RUN apt-get update && apt-get install -y --no-install-recommends gosu \
     && rm -rf /var/lib/apt/lists/* \
     && useradd -m -u 1000 unstuckarr \
     && mkdir -p /data \
@@ -36,4 +36,4 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 VOLUME ["/data"]
 EXPOSE 7676
 
-ENTRYPOINT ["docker-entrypoint.sh"]
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
