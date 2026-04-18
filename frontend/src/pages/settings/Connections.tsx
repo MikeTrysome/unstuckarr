@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { CheckCircle, Pencil, XCircle } from 'lucide-react'
 import { api } from '../../lib/api'
 import type { ConnectionConfig, ConnectionConfigUpdate, FullConfig } from '../../types'
-import { INPUT_CLS, MField, Modal, PageHeader, PORT_CLS } from '../../components/settings/shared'
+import { INPUT_CLS, MField, Modal, PageHeader, PORT_CLS, ServerError } from '../../components/settings/shared'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -153,23 +153,17 @@ function ArrModal({
         {keySet && !local.api_key && <span className="text-xs text-slate-500 shrink-0">key set</span>}
       </MField>
 
-      <div className="flex items-center justify-between pt-4">
+      <div className="flex justify-end gap-2 pt-4">
         <button type="button" onClick={test} disabled={testState === 'testing'}
           className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 transition-colors disabled:opacity-50">
-          {testState === 'testing' ? 'Testing…' : 'Test connection'}
+          {testState === 'testing' ? 'Testing…' : 'Test'}
           {testState === 'ok'   && <CheckCircle size={14} className="text-green-400" />}
           {testState === 'fail' && <XCircle size={14} className="text-red-400" />}
         </button>
-        <div className="flex gap-2">
-          <button onClick={onClose}
-            className="px-3 py-1.5 text-sm rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 transition-colors">
-            Cancel
-          </button>
-          <button onClick={() => { onSave(local); onClose() }}
-            className="px-4 py-1.5 text-sm rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition-colors font-medium">
-            Save
-          </button>
-        </div>
+        <button onClick={() => { onSave(local); onClose() }}
+          className="px-4 py-1.5 text-sm rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition-colors font-medium">
+          Save
+        </button>
       </div>
     </Modal>
   )
@@ -227,23 +221,17 @@ function RdtModal({
         {passwordSet && !local.password && <span className="text-xs text-slate-500 shrink-0">set</span>}
       </MField>
 
-      <div className="flex items-center justify-between pt-4">
+      <div className="flex justify-end gap-2 pt-4">
         <button type="button" onClick={test} disabled={testState === 'testing'}
           className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 transition-colors disabled:opacity-50">
-          {testState === 'testing' ? 'Testing…' : 'Test connection'}
+          {testState === 'testing' ? 'Testing…' : 'Test'}
           {testState === 'ok'   && <CheckCircle size={14} className="text-green-400" />}
           {testState === 'fail' && <XCircle size={14} className="text-red-400" />}
         </button>
-        <div className="flex gap-2">
-          <button onClick={onClose}
-            className="px-3 py-1.5 text-sm rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 transition-colors">
-            Cancel
-          </button>
-          <button onClick={() => { onSave(local); onClose() }}
-            className="px-4 py-1.5 text-sm rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition-colors font-medium">
-            Save
-          </button>
-        </div>
+        <button onClick={() => { onSave(local); onClose() }}
+          className="px-4 py-1.5 text-sm rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition-colors font-medium">
+          Save
+        </button>
       </div>
     </Modal>
   )
@@ -265,16 +253,20 @@ function GroupCard({ title, children }: { title: string; children: React.ReactNo
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function Connections() {
-  const [config, setConfig] = useState<FullConfig | null>(null)
+  const [config, setConfig]   = useState<FullConfig | null>(null)
   const [drafts, setDrafts]   = useState<Drafts | null>(null)
   const [editing, setEditing] = useState<EditTarget>(null)
+  const [loadError, setLoadError] = useState(false)
 
-  useEffect(() => {
+  const load = () => {
+    setLoadError(false)
     api.config.get().then((c) => {
       setConfig(c)
       setDrafts(buildDrafts(c.connections))
-    }).catch(() => {})
-  }, [])
+    }).catch(() => setLoadError(true))
+  }
+
+  useEffect(load, [])
 
   const save = async (updated: Drafts) => {
     const result = await api.config.update({ connections: buildUpdate(updated) }).catch(() => null)
@@ -298,6 +290,7 @@ export default function Connections() {
     save(updated)
   }
 
+  if (loadError) return <ServerError onRetry={load} />
   if (!config || !drafts) return <p className="text-slate-500 text-sm">Loading…</p>
 
   const conn = config.connections

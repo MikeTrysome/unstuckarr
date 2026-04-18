@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { HelpCircle, X } from 'lucide-react'
+import { HelpCircle, RefreshCw, ServerOff, X } from 'lucide-react'
 
 // ─── Tooltip ──────────────────────────────────────────────────────────────────
 
@@ -107,6 +107,31 @@ export function SectionCard({
         <h2 className="text-sm font-medium text-white">{title}</h2>
       </div>
       <div className="px-5">{children}</div>
+    </div>
+  )
+}
+
+// ─── Server error ─────────────────────────────────────────────────────────────
+
+export function ServerError({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
+      <div className="w-14 h-14 rounded-2xl bg-red-500/10 flex items-center justify-center">
+        <ServerOff size={28} className="text-red-400" />
+      </div>
+      <div>
+        <p className="text-base font-semibold text-white">Could not connect to server</p>
+        <p className="text-sm text-slate-400 mt-1">
+          Failed to load settings. Check that the backend is running and try again.
+        </p>
+      </div>
+      <button
+        onClick={onRetry}
+        className="flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition-colors"
+      >
+        <RefreshCw size={14} />
+        Retry
+      </button>
     </div>
   )
 }

@@ -1,20 +1,26 @@
 import { useEffect, useState } from 'react'
 import { api } from '../../lib/api'
 import type { DbConfig } from '../../types'
-import { NUMBER_CLS, PageHeader, SectionCard, Tip } from '../../components/settings/shared'
+import { NUMBER_CLS, PageHeader, SectionCard, ServerError, Tip } from '../../components/settings/shared'
 
 export default function Detection() {
   const [db, setDb]         = useState<DbConfig | null>(null)
   const [draft, setDraft]   = useState<Partial<DbConfig>>({})
   const [saving, setSaving] = useState(false)
   const [saved, setSaved]   = useState(false)
+  const [loadError, setLoadError] = useState(false)
 
-  useEffect(() => {
+  const load = () => {
+    setLoadError(false)
     api.config.get().then((c) => {
       setDb(c.db)
       setDraft({ ...c.db })
-    }).catch(() => {})
-  }, [])
+    }).catch(() => setLoadError(true))
+  }
+
+  useEffect(load, [])
+
+  if (loadError) return <ServerError onRetry={load} />
 
   const save = async () => {
     if (!db) return

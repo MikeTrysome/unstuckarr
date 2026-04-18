@@ -62,9 +62,7 @@ export function Sidebar() {
       {/* Logo */}
       <div className="px-5 py-5 border-b border-[var(--bd)]">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center">
-            <Activity size={14} className="text-white" />
-          </div>
+          <img src="/favicon.svg" alt="Unstuckarr" className="w-7 h-7" />
           <span className="font-semibold text-white text-sm tracking-wide">Unstuckarr</span>
         </div>
       </div>
