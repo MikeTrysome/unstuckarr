@@ -138,22 +138,26 @@ def run_cleanup(dry_run: bool | None = None, triggered_by: str = "scheduler") ->
                 elif dry_run:
                     total_removed += 1  # Count for dry-run reporting
 
-                event = CleanupEvent(
-                    timestamp=_utcnow(),
-                    instance_name=instance.name,
-                    arr_queue_id=item_id,
-                    title=title,
-                    download_hash=(arr_item.get("downloadId") or "").lower() or None,
-                    error_type=stuck.error_type,
-                    error_message=stuck.error_message,
-                    action=action,
-                    search_type=search_type,
-                    dry_run=dry_run,
-                    triggered_by=triggered_by,
-                    run_id=run_id,
-                )
-                db.add(event)
-                db.commit()
+                try:
+                    event = CleanupEvent(
+                        timestamp=_utcnow(),
+                        instance_name=instance.name,
+                        arr_queue_id=item_id,
+                        title=title,
+                        download_hash=(arr_item.get("downloadId") or "").lower() or None,
+                        error_type=stuck.error_type,
+                        error_message=stuck.error_message,
+                        action=action,
+                        search_type=search_type,
+                        dry_run=dry_run,
+                        triggered_by=triggered_by,
+                        run_id=run_id,
+                    )
+                    db.add(event)
+                    db.commit()
+                except Exception as exc:
+                    _log("ERROR", f"Failed to persist event for '{title[:60]}': {exc}", run_id=run_id)
+                    db.rollback()
 
         run.finished_at = _utcnow()
         run.total_checked = total_checked

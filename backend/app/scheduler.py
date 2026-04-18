@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from concurrent.futures import ThreadPoolExecutor
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -8,14 +9,28 @@ from apscheduler.triggers.interval import IntervalTrigger
 
 from app.config import get_settings
 
+logger = logging.getLogger(__name__)
+
 _scheduler = AsyncIOScheduler()
 _executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="cleanup")
 
+# Guard flag: prevents queuing a new run while one is already in progress.
+# Accessed only from the asyncio event loop thread → no lock needed.
+_job_running: bool = False
+
 
 async def _run_cleanup_job():
-    from app.services.cleanup_service import run_cleanup
-    loop = asyncio.get_event_loop()
-    await loop.run_in_executor(_executor, run_cleanup, None, "scheduler")
+    global _job_running
+    if _job_running:
+        logger.info("Cleanup already running — skipping this scheduled tick.")
+        return
+    _job_running = True
+    try:
+        from app.services.cleanup_service import run_cleanup
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(_executor, run_cleanup, None, "scheduler")
+    finally:
+        _job_running = False
 
 
 async def start():
