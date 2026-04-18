@@ -71,7 +71,8 @@ def run_cleanup(dry_run: bool | None = None, triggered_by: str = "scheduler") ->
         detection_cfg = _build_detection_config(db)
         total_checked = 0
         total_stuck = 0
-        total_removed = 0
+        total_removed = 0       # actual removals (live run)
+        total_would_remove = 0  # items that would be removed (dry-run)
 
         # Fetch RDT torrents once for all ARR instances
         rdt_index: dict = {}
@@ -136,7 +137,7 @@ def run_cleanup(dry_run: bool | None = None, triggered_by: str = "scheduler") ->
                         _log("ERROR", f"Remove failed: {exc}", run_id=run_id)
                         action = "error"
                 elif dry_run:
-                    total_removed += 1  # Count for dry-run reporting
+                    total_would_remove += 1
 
                 try:
                     event = CleanupEvent(
@@ -159,16 +160,18 @@ def run_cleanup(dry_run: bool | None = None, triggered_by: str = "scheduler") ->
                     _log("ERROR", f"Failed to persist event for '{title[:60]}': {exc}", run_id=run_id)
                     db.rollback()
 
+        reported_removed = total_would_remove if dry_run else total_removed
         run.finished_at = _utcnow()
         run.total_checked = total_checked
         run.total_stuck = total_stuck
-        run.total_removed = total_removed
+        run.total_removed = reported_removed
         run.status = "success"
         db.commit()
 
+        removed_label = "would remove" if dry_run else "removed"
         summary = (
             f"{'DRY-RUN ' if dry_run else ''}Completed — "
-            f"{total_stuck} stuck found, {total_removed} removed"
+            f"{total_stuck} stuck found, {reported_removed} {removed_label}"
         )
         _log("INFO", summary, run_id=run_id)
         return run_id
