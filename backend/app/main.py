@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -127,4 +127,19 @@ def health():
 # Serve React SPA — must be registered last
 _static_dir = os.environ.get("STATIC_DIR", "static")
 if os.path.isdir(_static_dir):
-    app.mount("/", StaticFiles(directory=_static_dir, html=True), name="static")
+    # Mount /assets separately so JS/CSS bundles are served efficiently
+    _assets_dir = os.path.join(_static_dir, "assets")
+    if os.path.isdir(_assets_dir):
+        app.mount("/assets", StaticFiles(directory=_assets_dir), name="assets")
+
+    @app.get("/{full_path:path}", include_in_schema=False)
+    async def serve_spa(full_path: str):
+        # Serve exact static files (favicon.svg, icons.svg, etc.)
+        candidate = os.path.join(_static_dir, full_path)
+        if full_path and os.path.isfile(candidate):
+            return FileResponse(candidate)
+        # All other paths → index.html (React handles client-side routing)
+        index = os.path.join(_static_dir, "index.html")
+        if os.path.isfile(index):
+            return FileResponse(index)
+        return JSONResponse({"detail": "Not Found"}, status_code=404)
