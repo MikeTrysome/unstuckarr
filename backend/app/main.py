@@ -158,7 +158,12 @@ if os.path.isdir(_static_dir):
         if full_path and os.path.isfile(candidate):
             return FileResponse(candidate)
         # All other paths → index.html (React handles client-side routing)
+        # No-cache so browsers always fetch fresh index.html after a container update
         index = os.path.join(_static_dir, "index.html")
         if os.path.isfile(index):
-            return FileResponse(index)
+            return FileResponse(index, headers={
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Pragma": "no-cache",
+                "Expires": "0",
+            })
         return JSONResponse({"detail": "Not Found"}, status_code=404)
