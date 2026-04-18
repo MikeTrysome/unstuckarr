@@ -23,8 +23,27 @@ limiter = Limiter(key_func=get_remote_address)
 def _init_auth() -> None:
     """Ensure the JWT secret exists in DB. Password is set via the /setup UI."""
     from app.auth import get_jwt_secret
+    from app.services.db_config import get
 
     get_jwt_secret()
+
+    # Migration: old password-only installs stored auth.password_hash without
+    # auth.username. The new system requires both. If only the hash exists,
+    # clear it so the user is prompted to go through the new setup flow.
+    db = SessionLocal()
+    try:
+        has_hash = bool(get(db, "auth.password_hash"))
+        has_username = bool(get(db, "auth.username"))
+        if has_hash and not has_username:
+            from app.models.config import ConfigEntry
+            db.query(ConfigEntry).filter_by(key="auth.password_hash").delete()
+            db.commit()
+            import logging
+            logging.getLogger(__name__).info(
+                "Migrated old password-only auth — user will be prompted for new setup"
+            )
+    finally:
+        db.close()
 
 
 def _init_connections() -> None:
