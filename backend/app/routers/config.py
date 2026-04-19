@@ -85,6 +85,8 @@ def _build_db_out(db: Session) -> DbConfigOut:
         detection_slow_speed_enabled=cfg["detection.slow_speed_enabled"],
         detection_slow_speed_threshold_kb=cfg["detection.slow_speed_threshold_kb"],
         detection_slow_speed_min_age_minutes=cfg["detection.slow_speed_min_age_minutes"],
+        detection_slow_min_completion_pct=cfg["detection.slow_min_completion_pct"],
+        detection_slow_max_completion_pct=cfg["detection.slow_max_completion_pct"],
         strikes_slow_threshold=cfg["strikes.slow_threshold"],
     )
 
@@ -187,6 +189,10 @@ def update_config(body: FullConfigIn, db: Session = Depends(get_db)):
             updates["detection.slow_speed_threshold_kb"] = d.detection_slow_speed_threshold_kb
         if d.detection_slow_speed_min_age_minutes is not None:
             updates["detection.slow_speed_min_age_minutes"] = d.detection_slow_speed_min_age_minutes
+        if d.detection_slow_min_completion_pct is not None:
+            updates["detection.slow_min_completion_pct"] = d.detection_slow_min_completion_pct
+        if d.detection_slow_max_completion_pct is not None:
+            updates["detection.slow_max_completion_pct"] = d.detection_slow_max_completion_pct
         if d.strikes_slow_threshold is not None:
             updates["strikes.slow_threshold"] = d.strikes_slow_threshold
         if updates:

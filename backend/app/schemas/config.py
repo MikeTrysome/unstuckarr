@@ -15,6 +15,8 @@ class DbConfigOut(BaseModel):
     detection_slow_speed_enabled: bool
     detection_slow_speed_threshold_kb: int
     detection_slow_speed_min_age_minutes: int
+    detection_slow_min_completion_pct: int
+    detection_slow_max_completion_pct: int
     strikes_slow_threshold: int
 
 
@@ -32,6 +34,8 @@ class DbConfigIn(BaseModel):
     detection_slow_speed_enabled: bool | None = None
     detection_slow_speed_threshold_kb: int | None = Field(None, ge=0, le=1_000_000)
     detection_slow_speed_min_age_minutes: int | None = Field(None, ge=1, le=10080)
+    detection_slow_min_completion_pct: int | None = Field(None, ge=0, le=100)
+    detection_slow_max_completion_pct: int | None = Field(None, ge=0, le=100)
     strikes_slow_threshold: int | None = Field(None, ge=1, le=100)
 
 

@@ -14,6 +14,36 @@ function toKb(value: number, unit: SpeedUnit): number {
   return unit === 'MB/s' ? Math.round(value * 1024) : value
 }
 
+interface StepperProps {
+  value: number
+  min?: number
+  max?: number
+  step: number
+  onChange: (v: number) => void
+  suffix?: string
+}
+
+function Stepper({ value, min = 0, max, step, onChange, suffix }: StepperProps) {
+  const dec = () => onChange(Math.max(min, value - step))
+  const inc = () => onChange(max !== undefined ? Math.min(max, value + step) : value + step)
+  return (
+    <div className="flex items-center">
+      <div className="flex items-center border border-[var(--bd)] rounded-lg overflow-hidden bg-[var(--bg-base)]">
+        <button type="button" onClick={dec}
+          className="px-3 py-2 text-slate-400 hover:text-white hover:bg-white/5 transition-colors select-none">–</button>
+        <input
+          type="number" value={value} min={min} max={max}
+          onChange={(e) => onChange(Number(e.target.value))}
+          className="w-16 bg-transparent text-center text-sm text-slate-200 outline-none py-2"
+        />
+        <button type="button" onClick={inc}
+          className="px-3 py-2 text-slate-400 hover:text-white hover:bg-white/5 transition-colors select-none">+</button>
+      </div>
+      {suffix && <span className="ml-2 text-xs text-slate-500">{suffix}</span>}
+    </div>
+  )
+}
+
 export default function Detection() {
   const [db, setDb]         = useState<DbConfig | null>(null)
   const [draft, setDraft]   = useState<Partial<DbConfig>>({})
@@ -206,55 +236,83 @@ export default function Detection() {
         </div>
 
         <div className={slowEnabled ? '' : 'opacity-40 pointer-events-none'}>
-          {/* Speed threshold with unit toggle */}
+          {/* Min Speed with stepper + unit toggle */}
           <div className="flex items-center justify-between py-2.5 border-b border-[var(--bd)] gap-4">
             <div className="flex items-center gap-1.5">
-              <span className="text-sm text-slate-400">Speed threshold</span>
-              <Tip text="Downloads below this speed are considered slow and will accumulate strikes. Switch between KB/s and MB/s using the unit button." />
+              <span className="text-sm text-slate-400">Min Speed</span>
+              <Tip text="Downloads below this speed are considered slow and will accumulate strikes." />
             </div>
             <div className="flex items-center gap-2">
-              <input
-                type="number"
-                min={0.1}
-                step={speedUnit === 'MB/s' ? 0.1 : 100}
+              <Stepper
                 value={toDisplaySpeed(val('detection_slow_speed_threshold_kb') as number, speedUnit)}
-                onChange={(e) => setVal('detection_slow_speed_threshold_kb', toKb(Number(e.target.value), speedUnit) as never)}
-                className={NUMBER_CLS}
+                min={0}
+                step={speedUnit === 'MB/s' ? 0.1 : 100}
+                onChange={(v) => setVal('detection_slow_speed_threshold_kb', toKb(v, speedUnit) as never)}
               />
-              <button
-                type="button"
-                onClick={() => setSpeedUnit((u) => u === 'KB/s' ? 'MB/s' : 'KB/s')}
-                className="px-2 py-1 text-xs rounded border border-[var(--bd)] text-slate-400 hover:text-slate-200 hover:border-slate-500 transition-colors w-14 text-center"
-              >
-                {speedUnit}
-              </button>
+              <div className="flex rounded-lg overflow-hidden border border-[var(--bd)] text-xs">
+                {(['KB/s', 'MB/s'] as SpeedUnit[]).map((u) => (
+                  <button
+                    key={u} type="button"
+                    onClick={() => setSpeedUnit(u)}
+                    className={`px-2.5 py-1.5 transition-colors ${speedUnit === u ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
+                  >{u}</button>
+                ))}
+              </div>
             </div>
           </div>
 
-          {[
-            {
-              key: 'detection_slow_speed_min_age_minutes' as keyof DbConfig,
-              label: 'Grace period (min)',
-              min: 1,
-              tooltip: 'New downloads are not flagged as slow until they have been running for at least this many minutes. Prevents false positives during the initial connection phase.',
-            },
-            {
-              key: 'strikes_slow_threshold' as keyof DbConfig,
-              label: 'Slow download — strike threshold',
-              min: 1,
-              tooltip: 'Number of consecutive slow detections before a download is removed and re-queued. Default 3 = must be slow across 3 separate runs before removal.',
-            },
-          ].map(({ key, label, min, tooltip }) => (
-            <div key={key} className="flex items-center justify-between py-2.5 border-b border-[var(--bd)] last:border-0 gap-4">
-              <div className="flex items-center gap-1.5">
-                <span className="text-sm text-slate-400">{label}</span>
-                <Tip text={tooltip} />
-              </div>
-              <input type="number" min={min} value={val(key) as number}
-                onChange={(e) => setVal(key, Number(e.target.value) as never)}
-                className={NUMBER_CLS} />
+          {/* Max Strikes */}
+          <div className="flex items-center justify-between py-2.5 border-b border-[var(--bd)] gap-4">
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm text-slate-400">Max Strikes</span>
+              <Tip text="Number of consecutive slow detections before a download is removed and re-queued. Default 3 = must be slow across 3 separate runs before removal." />
             </div>
-          ))}
+            <Stepper
+              value={val('strikes_slow_threshold') as number}
+              min={1} step={1}
+              onChange={(v) => setVal('strikes_slow_threshold', v as never)}
+            />
+          </div>
+
+          {/* Grace period */}
+          <div className="flex items-center justify-between py-2.5 border-b border-[var(--bd)] gap-4">
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm text-slate-400">Grace period (min)</span>
+              <Tip text="New downloads are not flagged as slow until they have been running for at least this many minutes. Prevents false positives during the initial connection phase." />
+            </div>
+            <Stepper
+              value={val('detection_slow_speed_min_age_minutes') as number}
+              min={1} step={5}
+              onChange={(v) => setVal('detection_slow_speed_min_age_minutes', v as never)}
+              suffix="min"
+            />
+          </div>
+
+          {/* Min / Max Completion % */}
+          <div className="flex items-center justify-between py-2.5 border-b border-[var(--bd)] gap-4">
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm text-slate-400">Min Completion %</span>
+              <Tip text="Only flag downloads as slow once they have reached at least this completion percentage. 0 = from the start." />
+            </div>
+            <Stepper
+              value={val('detection_slow_min_completion_pct') as number}
+              min={0} max={100} step={5}
+              onChange={(v) => setVal('detection_slow_min_completion_pct', v as never)}
+              suffix="%"
+            />
+          </div>
+          <div className="flex items-center justify-between py-2.5 border-b border-[var(--bd)] last:border-0 gap-4">
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm text-slate-400">Max Completion %</span>
+              <Tip text="Do not flag downloads that are already past this completion percentage — they are almost done. Default 95 = leave downloads that are 95%+ complete alone." />
+            </div>
+            <Stepper
+              value={val('detection_slow_max_completion_pct') as number}
+              min={0} max={100} step={5}
+              onChange={(v) => setVal('detection_slow_max_completion_pct', v as never)}
+              suffix="%"
+            />
+          </div>
         </div>
 
         <p className="text-xs text-slate-500 pt-2 pb-1">

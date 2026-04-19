@@ -23,6 +23,8 @@ def _get_detection_config(db) -> DetectionConfig:
         slow_speed_enabled=db_config.get(db, "detection.slow_speed_enabled"),
         slow_speed_threshold_kb=db_config.get(db, "detection.slow_speed_threshold_kb"),
         slow_speed_min_age_minutes=db_config.get(db, "detection.slow_speed_min_age_minutes"),
+        slow_min_completion_pct=db_config.get(db, "detection.slow_min_completion_pct"),
+        slow_max_completion_pct=db_config.get(db, "detection.slow_max_completion_pct"),
     )
 
 

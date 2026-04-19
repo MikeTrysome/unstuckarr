@@ -16,6 +16,7 @@
   <ExtraParams>--restart=unless-stopped</ExtraParams>
   <ExtraSearchTerms>sonarr radarr rdt-client real-debrid stuck downloads cleanup arr queue</ExtraSearchTerms>
   <Beta>false</Beta>
+  <Version>0.2.0</Version>
   <DonateText/>
   <DonateLink/>
 

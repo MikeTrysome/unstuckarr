@@ -40,6 +40,8 @@ DEFAULTS: dict[str, Any] = {
     "detection.slow_speed_enabled": False,
     "detection.slow_speed_threshold_kb": 500,
     "detection.slow_speed_min_age_minutes": 10,
+    "detection.slow_min_completion_pct": 0,
+    "detection.slow_max_completion_pct": 95,
     # Connection config (DB-first, env var seeded on startup)
     "connection.sonarr.host": "",
     "connection.sonarr.port": 8989,

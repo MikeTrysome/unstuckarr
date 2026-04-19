@@ -81,6 +81,8 @@ export interface DbConfig {
   detection_slow_speed_enabled: boolean
   detection_slow_speed_threshold_kb: number
   detection_slow_speed_min_age_minutes: number
+  detection_slow_min_completion_pct: number
+  detection_slow_max_completion_pct: number
   strikes_slow_threshold: number
 }
 

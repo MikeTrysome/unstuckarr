@@ -26,6 +26,8 @@ class DetectionConfig:
     slow_speed_enabled: bool = False
     slow_speed_threshold_kb: int = 500
     slow_speed_min_age_minutes: int = 10
+    slow_min_completion_pct: int = 0
+    slow_max_completion_pct: int = 95
 
 
 @dataclass
@@ -105,6 +107,15 @@ def passes_retry_check(torrent: "TorrentInfo", config: DetectionConfig) -> bool:
     return torrent.retry_count >= config.min_retry_count
 
 
+def get_completion_pct(arr_item: dict) -> float:
+    """Returns download completion percentage (0–100) from ARR queue item."""
+    size = arr_item.get("size") or 0
+    sizeleft = arr_item.get("sizeleft") or 0
+    if size <= 0:
+        return 0.0
+    return (1 - sizeleft / size) * 100
+
+
 def is_below_speed_threshold(torrent: "TorrentInfo", threshold_kb: int) -> bool:
     """Returns True if the torrent's speed is known and below the threshold."""
     if torrent.speed_bytes is None:
@@ -177,6 +188,10 @@ def find_stuck_items(
                 continue
 
             if not is_below_speed_threshold(rdt_torrent, config.slow_speed_threshold_kb):
+                continue
+
+            completion = get_completion_pct(item)
+            if not (config.slow_min_completion_pct <= completion <= config.slow_max_completion_pct):
                 continue
 
             speed_kb = (rdt_torrent.speed_bytes or 0) // 1024
