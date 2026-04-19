@@ -50,6 +50,15 @@ async def stop():
         _scheduler.shutdown(wait=False)
 
 
+def reschedule(interval_minutes: int) -> None:
+    """Reschedule the cleanup job with a new interval. No-op if scheduler not running."""
+    if _scheduler.running:
+        _scheduler.reschedule_job(
+            "cleanup_job",
+            trigger=IntervalTrigger(minutes=max(1, interval_minutes)),
+        )
+
+
 def get_next_run_time() -> str | None:
     job = _scheduler.get_job("cleanup_job")
     if job and job.next_run_time:

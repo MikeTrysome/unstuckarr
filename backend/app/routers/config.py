@@ -77,6 +77,7 @@ def _build_db_out(db: Session) -> DbConfigOut:
         detection_min_retry_count=cfg["detection.min_retry_count"],
         scheduler_dry_run=cfg["scheduler.dry_run"],
         scheduler_enabled=cfg["scheduler.enabled"],
+        scheduler_interval_minutes=cfg["scheduler.interval_minutes"],
         notifications_apprise_urls=cfg["notifications.apprise_urls"],
         strikes_enabled=cfg["strikes.enabled"],
         strikes_infringing_threshold=cfg["strikes.infringing_threshold"],
@@ -170,6 +171,8 @@ def update_config(body: FullConfigIn, db: Session = Depends(get_db)):
             updates["scheduler.dry_run"] = d.scheduler_dry_run
         if d.scheduler_enabled is not None:
             updates["scheduler.enabled"] = d.scheduler_enabled
+        if d.scheduler_interval_minutes is not None:
+            updates["scheduler.interval_minutes"] = d.scheduler_interval_minutes
         if d.notifications_apprise_urls is not None:
             updates["notifications.apprise_urls"] = d.notifications_apprise_urls
         if d.strikes_enabled is not None:
@@ -188,6 +191,9 @@ def update_config(body: FullConfigIn, db: Session = Depends(get_db)):
             updates["strikes.slow_threshold"] = d.strikes_slow_threshold
         if updates:
             db_config.update_many(db, updates)
+            if "scheduler.interval_minutes" in updates:
+                from app import scheduler as _sched
+                _sched.reschedule(updates["scheduler.interval_minutes"])
 
     return FullConfigOut(connections=_build_connection_out(db), db=_build_db_out(db))
 

@@ -73,6 +73,7 @@ export interface DbConfig {
   detection_min_retry_count: number
   scheduler_dry_run: boolean
   scheduler_enabled: boolean
+  scheduler_interval_minutes: number
   notifications_apprise_urls: string[]
   strikes_enabled: boolean
   strikes_infringing_threshold: number

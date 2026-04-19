@@ -4,10 +4,21 @@ import type { DbConfig } from '../../types'
 import { NUMBER_CLS, PageHeader, SectionCard, ServerError, Tip, Toggle } from '../../components/settings/shared'
 import { useSaveState } from '../../hooks/useSaveState'
 
+type SpeedUnit = 'KB/s' | 'MB/s'
+
+function toDisplaySpeed(kb: number, unit: SpeedUnit): number {
+  return unit === 'MB/s' ? Math.round(kb / 1024 * 10) / 10 : kb
+}
+
+function toKb(value: number, unit: SpeedUnit): number {
+  return unit === 'MB/s' ? Math.round(value * 1024) : value
+}
+
 export default function Detection() {
   const [db, setDb]         = useState<DbConfig | null>(null)
   const [draft, setDraft]   = useState<Partial<DbConfig>>({})
   const [loadError, setLoadError] = useState(false)
+  const [speedUnit, setSpeedUnit] = useState<SpeedUnit>('KB/s')
   const { saving, saved, wrap } = useSaveState()
 
   const load = () => {
@@ -68,7 +79,7 @@ export default function Detection() {
 
       <SectionCard title="Monitoring overview">
         <p className="text-xs text-slate-500 pb-3 pt-1">
-          What Unstuckarr actively monitors on every scheduler run.
+          What Unstuckarr actively monitors every {val('scheduler_interval_minutes')} minute(s).
         </p>
         <div className="space-y-2.5">
           {monitoringModes.map(({ color, label, desc }) => (
@@ -96,6 +107,18 @@ export default function Detection() {
           </div>
           <Toggle checked={val('scheduler_enabled') as boolean}
             onChange={(v) => setVal('scheduler_enabled', v as never)} />
+        </div>
+        <div className="flex items-center justify-between py-2.5 border-b border-[var(--bd)] gap-4">
+          <div className="flex items-center gap-1.5">
+            <span className="text-sm text-slate-400">Interval (minutes)</span>
+            <Tip text="How often Unstuckarr scans for stuck or slow downloads. Lower = faster response, higher = less overhead. Changes take effect immediately without restart." />
+          </div>
+          <input
+            type="number" min={1} max={1440}
+            value={val('scheduler_interval_minutes') as number}
+            onChange={(e) => setVal('scheduler_interval_minutes', Number(e.target.value) as never)}
+            className={NUMBER_CLS}
+          />
         </div>
         <div className="flex items-center justify-between py-2.5">
           <div className="flex items-center gap-1.5">
@@ -183,13 +206,32 @@ export default function Detection() {
         </div>
 
         <div className={slowEnabled ? '' : 'opacity-40 pointer-events-none'}>
+          {/* Speed threshold with unit toggle */}
+          <div className="flex items-center justify-between py-2.5 border-b border-[var(--bd)] gap-4">
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm text-slate-400">Speed threshold</span>
+              <Tip text="Downloads below this speed are considered slow and will accumulate strikes. Switch between KB/s and MB/s using the unit button." />
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                min={0.1}
+                step={speedUnit === 'MB/s' ? 0.1 : 100}
+                value={toDisplaySpeed(val('detection_slow_speed_threshold_kb') as number, speedUnit)}
+                onChange={(e) => setVal('detection_slow_speed_threshold_kb', toKb(Number(e.target.value), speedUnit) as never)}
+                className={NUMBER_CLS}
+              />
+              <button
+                type="button"
+                onClick={() => setSpeedUnit((u) => u === 'KB/s' ? 'MB/s' : 'KB/s')}
+                className="px-2 py-1 text-xs rounded border border-[var(--bd)] text-slate-400 hover:text-slate-200 hover:border-slate-500 transition-colors w-14 text-center"
+              >
+                {speedUnit}
+              </button>
+            </div>
+          </div>
+
           {[
-            {
-              key: 'detection_slow_speed_threshold_kb' as keyof DbConfig,
-              label: 'Speed threshold (KB/s)',
-              min: 1,
-              tooltip: 'Downloads below this speed (in KB/s) are considered slow and will accumulate strikes. Example: 500 = flag downloads slower than 500 KB/s.',
-            },
             {
               key: 'detection_slow_speed_min_age_minutes' as keyof DbConfig,
               label: 'Grace period (min)',
