@@ -2,19 +2,121 @@ import { useEffect, useState } from 'react'
 import { api } from '../../lib/api'
 import type { DbConfig, NotificationProvider } from '../../types'
 import { NOTIFICATION_EVENTS } from '../../types'
-import { Modal, MField, PageHeader, SectionCard, ServerError, Tip, Toggle, INPUT_CLS } from '../../components/settings/shared'
+import { Modal, MField, PageHeader, ServerError, Tip, Toggle, INPUT_CLS } from '../../components/settings/shared'
 import { useSaveState } from '../../hooks/useSaveState'
-import { Bell, Pencil, Trash2, Send, Plus } from 'lucide-react'
+import { Bell, Pencil, Trash2, Send, Plus, Megaphone, MessageSquare, Ghost, Crosshair, Terminal, Smartphone } from 'lucide-react'
 
-function newProvider(): NotificationProvider {
+// ─── Provider type definitions ────────────────────────────────────────────────
+
+interface ProviderTypeInfo {
+  type: string
+  name: string
+  subtitle: string
+  placeholder: string
+  icon: React.ReactNode
+}
+
+const PROVIDER_TYPES: ProviderTypeInfo[] = [
+  {
+    type: 'apprise',
+    name: 'Apprise',
+    subtitle: 'github.com/caronc/apprise',
+    placeholder: 'schema://...',
+    icon: <Megaphone size={28} />,
+  },
+  {
+    type: 'discord',
+    name: 'Discord',
+    subtitle: 'discord.com',
+    placeholder: 'discord://webhook_id/token',
+    icon: <MessageSquare size={28} />,
+  },
+  {
+    type: 'gotify',
+    name: 'Gotify',
+    subtitle: 'gotify.net',
+    placeholder: 'gotify://hostname/token',
+    icon: <Ghost size={28} />,
+  },
+  {
+    type: 'notifiarr',
+    name: 'Notifiarr',
+    subtitle: 'notifiarr.com',
+    placeholder: 'notifiarr://apikey/',
+    icon: <Crosshair size={28} />,
+  },
+  {
+    type: 'ntfy',
+    name: 'ntfy',
+    subtitle: 'ntfy.sh',
+    placeholder: 'ntfy://ntfy.sh/topic',
+    icon: <Terminal size={28} />,
+  },
+  {
+    type: 'pushover',
+    name: 'Pushover',
+    subtitle: 'pushover.net',
+    placeholder: 'pover://user@token',
+    icon: <Smartphone size={28} />,
+  },
+  {
+    type: 'telegram',
+    name: 'Telegram',
+    subtitle: 'core.telegram.org/bots',
+    placeholder: 'tgram://bottoken/chatid',
+    icon: <Send size={28} />,
+  },
+]
+
+function getProviderType(type: string): ProviderTypeInfo {
+  return PROVIDER_TYPES.find((t) => t.type === type) ?? PROVIDER_TYPES[0]
+}
+
+function newProvider(type: string): NotificationProvider {
   return {
     id: crypto.randomUUID(),
+    type,
     name: '',
     enabled: true,
     url: '',
     events: ['strike', 'slow_strike', 'removed'],
   }
 }
+
+// ─── Type picker modal ────────────────────────────────────────────────────────
+
+interface TypePickerModalProps {
+  onSelect: (pt: ProviderTypeInfo) => void
+  onClose: () => void
+}
+
+function TypePickerModal({ onSelect, onClose }: TypePickerModalProps) {
+  return (
+    <Modal title="Add Notification Provider" onClose={onClose} size="lg">
+      <div className="space-y-4">
+        <p className="text-sm text-slate-400">Choose a notification provider type to configure:</p>
+        <div className="grid grid-cols-3 gap-3">
+          {PROVIDER_TYPES.map((pt) => (
+            <button
+              key={pt.type}
+              type="button"
+              onClick={() => onSelect(pt)}
+              className="flex flex-col items-center gap-2 p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-indigo-500/50 transition-all text-center group"
+            >
+              <div className="text-white/70 group-hover:text-white transition-colors">
+                {pt.icon}
+              </div>
+              <span className="text-sm font-semibold text-slate-200 group-hover:text-white">{pt.name}</span>
+              <span className="text-[11px] text-slate-500 group-hover:text-slate-400 leading-tight">{pt.subtitle}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </Modal>
+  )
+}
+
+// ─── Provider config modal ────────────────────────────────────────────────────
 
 interface ProviderModalProps {
   provider: NotificationProvider
@@ -26,6 +128,7 @@ function ProviderModal({ provider, onSave, onClose }: ProviderModalProps) {
   const [draft, setDraft] = useState<NotificationProvider>({ ...provider })
   const [testing, setTesting] = useState(false)
   const [testResult, setTestResult] = useState<boolean | null>(null)
+  const pt = getProviderType(draft.type)
 
   const toggleEvent = (key: string) => {
     setDraft((d) => ({
@@ -51,7 +154,7 @@ function ProviderModal({ provider, onSave, onClose }: ProviderModalProps) {
   const canSave = draft.name.trim() && draft.url.trim()
 
   return (
-    <Modal title={isNew ? 'Add Provider' : 'Edit Provider'} onClose={onClose}>
+    <Modal title={isNew ? `Add ${pt.name} Provider` : 'Edit Provider'} onClose={onClose}>
       <div className="space-y-4">
         <MField label="Name" tooltip="A unique name to identify this notification provider.">
           <input
@@ -72,21 +175,23 @@ function ProviderModal({ provider, onSave, onClose }: ProviderModalProps) {
           label="Apprise URL"
           tooltip="Apprise notification URL for this provider. Supports 80+ services: Discord, Telegram, Slack, Ntfy, Pushover, Gotify and more."
         >
-          <input
-            type="text"
-            placeholder="discord://webhook_id/token"
-            value={draft.url}
-            onChange={(e) => setDraft((d) => ({ ...d, url: e.target.value }))}
-            className={`${INPUT_CLS} font-mono text-xs`}
-          />
-          <a
-            href="https://github.com/caronc/apprise/wiki"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-indigo-400 hover:text-indigo-300 mt-1 inline-block"
-          >
-            Apprise URL formats →
-          </a>
+          <div className="flex flex-col gap-1 items-end">
+            <input
+              type="text"
+              placeholder={pt.placeholder}
+              value={draft.url}
+              onChange={(e) => setDraft((d) => ({ ...d, url: e.target.value }))}
+              className={`${INPUT_CLS} font-mono text-xs`}
+            />
+            <a
+              href="https://github.com/caronc/apprise/wiki"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-indigo-400 hover:text-indigo-300"
+            >
+              Apprise URL formats →
+            </a>
+          </div>
         </MField>
 
         <div>
@@ -113,20 +218,22 @@ function ProviderModal({ provider, onSave, onClose }: ProviderModalProps) {
         </div>
 
         <div className="flex items-center justify-between pt-2 border-t border-[var(--bd)]">
-          <button
-            type="button"
-            onClick={test}
-            disabled={testing || !draft.url.trim()}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 transition-colors disabled:opacity-40"
-          >
-            <Send size={13} />
-            {testing ? 'Sending…' : 'Test'}
-          </button>
-          {testResult !== null && (
-            <span className={`text-xs ${testResult ? 'text-green-400' : 'text-red-400'}`}>
-              {testResult ? 'Notification sent successfully' : 'Notification failed — check URL'}
-            </span>
-          )}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={test}
+              disabled={testing || !draft.url.trim()}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 transition-colors disabled:opacity-40"
+            >
+              <Send size={13} />
+              {testing ? 'Sending…' : 'Test'}
+            </button>
+            {testResult !== null && (
+              <span className={`text-xs ${testResult ? 'text-green-400' : 'text-red-400'}`}>
+                {testResult ? '✓ Sent' : '✕ Failed — check URL'}
+              </span>
+            )}
+          </div>
           <div className="flex gap-2">
             <button
               type="button"
@@ -150,10 +257,13 @@ function ProviderModal({ provider, onSave, onClose }: ProviderModalProps) {
   )
 }
 
+// ─── Main page ────────────────────────────────────────────────────────────────
+
 export default function Notifications() {
   const [db, setDb]           = useState<DbConfig | null>(null)
   const [providers, setProviders] = useState<NotificationProvider[]>([])
   const [loadError, setLoadError] = useState(false)
+  const [showTypePicker, setShowTypePicker] = useState(false)
   const [editing, setEditing] = useState<NotificationProvider | null>(null)
   const { saving, saved, wrap } = useSaveState()
 
@@ -201,24 +311,40 @@ export default function Notifications() {
     save(updated)
   }
 
+  const handleTypeSelect = (pt: ProviderTypeInfo) => {
+    setShowTypePicker(false)
+    setEditing(newProvider(pt.type))
+  }
+
   return (
     <div className="space-y-5 max-w-2xl">
       <PageHeader
         title="Notifications"
-        description="Get notified on strikes, removals, and retries. Each provider can be configured for specific events."
+        description="Configure notification providers"
       />
 
-      <SectionCard title="Notification Providers">
+      <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--bd)] overflow-hidden">
+        <div className="px-5 py-3 border-b border-[var(--bd)] flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-white">Providers</h2>
+          <button
+            onClick={() => setShowTypePicker(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition-colors"
+          >
+            <Plus size={14} />
+            Add Provider
+          </button>
+        </div>
+
         {providers.length === 0 ? (
-          <div className="py-8 text-center">
+          <div className="py-12 text-center">
             <Bell size={24} className="text-slate-600 mx-auto mb-2" />
-            <p className="text-sm text-slate-500">No notification providers configured.</p>
-            <p className="text-xs text-slate-600 mt-1">Add a provider to start receiving notifications.</p>
+            <p className="text-sm font-medium text-white">No notification providers</p>
+            <p className="text-xs text-slate-500 mt-1">Add a notification provider to get alerts.</p>
           </div>
         ) : (
           <div className="divide-y divide-[var(--bd)]">
             {providers.map((p) => (
-              <div key={p.id} className="py-3 flex items-start gap-3">
+              <div key={p.id} className="px-5 py-3 flex items-start gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className={`text-sm font-medium ${p.enabled ? 'text-slate-200' : 'text-slate-500'}`}>
@@ -264,33 +390,17 @@ export default function Notifications() {
             ))}
           </div>
         )}
-
-        <div className="pt-3 border-t border-[var(--bd)]">
-          <button
-            onClick={() => setEditing(newProvider())}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 transition-colors"
-          >
-            <Plus size={14} />
-            Add Provider
-          </button>
-        </div>
-      </SectionCard>
-
-      <SectionCard title="Available events">
-        <div className="py-1 space-y-3">
-          {NOTIFICATION_EVENTS.map(({ key, label, description }) => (
-            <div key={key} className="flex items-start gap-3">
-              <span className="mt-0.5 text-xs px-2 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex-shrink-0">
-                {label}
-              </span>
-              <p className="text-xs text-slate-500">{description}</p>
-            </div>
-          ))}
-        </div>
-      </SectionCard>
+      </div>
 
       {saving && <p className="text-xs text-slate-500">Saving…</p>}
       {saved && <p className="text-xs text-green-400">✓ Saved</p>}
+
+      {showTypePicker && (
+        <TypePickerModal
+          onSelect={handleTypeSelect}
+          onClose={() => setShowTypePicker(false)}
+        />
+      )}
 
       {editing && (
         <ProviderModal

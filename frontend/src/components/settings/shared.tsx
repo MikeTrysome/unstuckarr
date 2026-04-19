@@ -32,10 +32,12 @@ export function Modal({
   title,
   onClose,
   children,
+  size = 'md',
 }: {
   title: string
   onClose: () => void
   children: React.ReactNode
+  size?: 'md' | 'lg'
 }) {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
@@ -46,7 +48,7 @@ export function Modal({
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
-      <div className="relative z-50 w-full max-w-md bg-[var(--bg-card)] rounded-xl border border-[var(--bd)] shadow-2xl">
+      <div className={`relative z-50 w-full ${size === 'lg' ? 'max-w-xl' : 'max-w-md'} bg-[var(--bg-card)] rounded-xl border border-[var(--bd)] shadow-2xl`}>
         <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--bd)]">
           <h3 className="text-sm font-semibold text-white">{title}</h3>
           <button onClick={onClose} className="text-slate-500 hover:text-slate-300 transition-colors">

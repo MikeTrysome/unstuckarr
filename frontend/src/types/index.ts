@@ -69,6 +69,7 @@ export interface DashboardData {
 
 export interface NotificationProvider {
   id: string
+  type: string
   name: string
   enabled: boolean
   url: string
