@@ -64,6 +64,3 @@
 
 /* Skipped/other action badges need visible bg in light mode */
 .light .bg-white\/5.border-white\/10 { background-color: rgba(0, 0, 0, 0.04); }
-
-/* Hover row highlight in tables */
-.light .hover\:bg-white\/2:hover { background-color: rgba(0, 0, 0, 0.03); }

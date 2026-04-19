@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Body, Depends
+import httpx
+from fastapi import APIRouter, Body, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -227,12 +228,11 @@ def test_one_connection(
             # If caller provided override values, test with those instead of DB values.
             # This lets the UI test credentials before the user has saved them.
             if body.host or body.port is not None or body.api_key:
-                import httpx as _httpx
                 test_host = body.host or inst.host
                 test_port = body.port if body.port is not None else inst.port
                 test_key  = body.api_key or inst.api_key
                 try:
-                    resp = _httpx.get(
+                    resp = httpx.get(
                         f"http://{test_host}:{test_port}/api/v3/system/status",
                         headers={"X-Api-Key": test_key or ""},
                         timeout=15.0,
@@ -242,5 +242,4 @@ def test_one_connection(
                     return {"ok": False}
             return {"ok": ArrService(inst).health_check()}
 
-    from fastapi import HTTPException
     raise HTTPException(status_code=404, detail="Instance not found")

@@ -17,6 +17,12 @@ import {
 import { clearToken } from '../../lib/auth'
 import { useTheme } from '../../hooks/useTheme'
 
+const THEME_META = {
+  dark:   { Icon: Moon,    label: 'Dark mode' },
+  light:  { Icon: Sun,     label: 'Light mode' },
+  system: { Icon: Monitor, label: 'System' },
+} as const
+
 const mainNav = [
   { to: '/',       label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/queue',  label: 'Queue',     icon: Activity },
@@ -68,12 +74,10 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
     navigate('/login')
   }
 
-  const ThemeIcon = theme === 'dark' ? Moon : theme === 'light' ? Sun : Monitor
-  const themeLabel = theme === 'dark' ? 'Dark mode' : theme === 'light' ? 'Light mode' : 'System'
+  const { Icon: ThemeIcon, label: themeLabel } = THEME_META[theme]
 
   return (
     <aside className="w-56 h-full bg-[var(--bg-card)] border-r border-[var(--bd)] flex flex-col">
-      {/* Logo */}
       <div className="px-5 py-5 border-b border-[var(--bd)] flex items-center justify-between">
         <div className="flex items-center gap-2">
           <img src="/icon.svg" alt="Unstuckarr" className="w-7 h-7" />
@@ -91,12 +95,10 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
       </div>
 
       <nav className="flex-1 p-3 flex flex-col gap-0.5 overflow-y-auto">
-        {/* Main navigation */}
         {mainNav.map(({ to, label, icon, end }) => (
           <NavItem key={to} to={to} label={label} icon={icon} end={end} onClick={onClose} />
         ))}
 
-        {/* Settings section */}
         <div className="mt-4 mb-1 px-3">
           <span className="text-[10px] font-semibold tracking-widest uppercase text-slate-600">
             Settings
@@ -107,7 +109,6 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
         ))}
       </nav>
 
-      {/* Bottom actions */}
       <div className="px-3 py-3 border-t border-[var(--bd)] flex flex-col gap-1">
         <button
           onClick={cycle}

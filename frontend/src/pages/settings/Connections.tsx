@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { CheckCircle, Pencil, XCircle } from 'lucide-react'
 import { api } from '../../lib/api'
 import type { ConnectionConfig, ConnectionConfigUpdate, FullConfig } from '../../types'
-import { INPUT_CLS, MField, Modal, PageHeader, PORT_CLS, ServerError, Toggle } from '../../components/settings/shared'
+import { INPUT_CLS, MField, Modal, PageHeader, PORT_CLS, SectionCard, ServerError, Toggle } from '../../components/settings/shared'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -227,19 +227,6 @@ function RdtModal({
   )
 }
 
-// ─── Group card ───────────────────────────────────────────────────────────────
-
-function GroupCard({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--bd)] overflow-hidden">
-      <div className="px-5 py-3 border-b border-[var(--bd)]">
-        <h2 className="text-sm font-semibold text-white">{title}</h2>
-      </div>
-      <div className="px-5">{children}</div>
-    </div>
-  )
-}
-
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function Connections() {
@@ -258,26 +245,30 @@ export default function Connections() {
 
   useEffect(load, [])
 
-  const save = async (updated: Drafts) => {
+  const save = async (updated: Drafts, prev: Drafts) => {
     const result = await api.config.update({ connections: buildUpdate(updated) }).catch(() => null)
     if (result) {
       setConfig(result)
       setDrafts(buildDrafts(result.connections))
+    } else {
+      setDrafts(prev)
     }
   }
 
   const handleArrSave = (key: ArrKey, draft: ArrDraft) => {
     if (!drafts) return
+    const prev = drafts
     const updated = { ...drafts, [key]: draft }
     setDrafts(updated)
-    save(updated)
+    save(updated, prev)
   }
 
   const handleRdtSave = (draft: RdtDraft) => {
     if (!drafts) return
+    const prev = drafts
     const updated = { ...drafts, rdt: draft }
     setDrafts(updated)
-    save(updated)
+    save(updated, prev)
   }
 
   if (loadError) return <ServerError onRetry={load} />
@@ -292,29 +283,24 @@ export default function Connections() {
         description="Configure your ARR apps and download client. API keys are stored encrypted."
       />
 
-      {/* Sonarr group */}
-      <GroupCard title="Sonarr">
+      <SectionCard title="Sonarr">
         <InstanceRow label="Sonarr" draft={drafts.sonarr} configured={Boolean(drafts.sonarr.host)}
           onEdit={() => setEditing('sonarr')} />
         <InstanceRow label="Sonarr 4K" draft={drafts.sonarr4k} configured={Boolean(drafts.sonarr4k.host)}
           onEdit={() => setEditing('sonarr4k')} />
-      </GroupCard>
+      </SectionCard>
 
-      {/* Radarr group */}
-      <GroupCard title="Radarr">
+      <SectionCard title="Radarr">
         <InstanceRow label="Radarr" draft={drafts.radarr} configured={Boolean(drafts.radarr.host)}
           onEdit={() => setEditing('radarr')} />
         <InstanceRow label="Radarr 4K" draft={drafts.radarr4k} configured={Boolean(drafts.radarr4k.host)}
           onEdit={() => setEditing('radarr4k')} />
-      </GroupCard>
+      </SectionCard>
 
-      {/* Downloaders group */}
-      <GroupCard title="Downloaders">
+      <SectionCard title="Downloaders">
         <InstanceRow label="RDT-client" draft={drafts.rdt} configured={Boolean(drafts.rdt.host)}
           onEdit={() => setEditing('rdt')} />
-      </GroupCard>
-
-      {/* Modals */}
+      </SectionCard>
       {editing && editing !== 'rdt' && (
         <ArrModal
           label={{ sonarr: 'Sonarr', sonarr4k: 'Sonarr 4K', radarr: 'Radarr', radarr4k: 'Radarr 4K' }[editing]}

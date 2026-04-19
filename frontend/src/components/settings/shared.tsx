@@ -126,7 +126,7 @@ export function SectionCard({
   return (
     <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--bd)] overflow-hidden">
       <div className="px-5 py-3 border-b border-[var(--bd)]">
-        <h2 className="text-sm font-medium text-white">{title}</h2>
+        <h2 className="text-sm font-semibold text-white">{title}</h2>
       </div>
       <div className="px-5">{children}</div>
     </div>

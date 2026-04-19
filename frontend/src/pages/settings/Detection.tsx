@@ -2,13 +2,13 @@ import { useEffect, useState } from 'react'
 import { api } from '../../lib/api'
 import type { DbConfig } from '../../types'
 import { NUMBER_CLS, PageHeader, SectionCard, ServerError, Tip, Toggle } from '../../components/settings/shared'
+import { useSaveState } from '../../hooks/useSaveState'
 
 export default function Detection() {
   const [db, setDb]         = useState<DbConfig | null>(null)
   const [draft, setDraft]   = useState<Partial<DbConfig>>({})
-  const [saving, setSaving] = useState(false)
-  const [saved, setSaved]   = useState(false)
   const [loadError, setLoadError] = useState(false)
+  const { saving, saved, wrap } = useSaveState()
 
   const load = () => {
     setLoadError(false)
@@ -22,18 +22,14 @@ export default function Detection() {
 
   if (loadError) return <ServerError onRetry={load} />
 
-  const save = async () => {
+  const save = () => wrap(async () => {
     if (!db) return
-    setSaving(true)
     const result = await api.config.update({ db: draft }).catch(() => null)
     if (result) {
       setDb(result.db)
       setDraft({ ...result.db })
     }
-    setSaving(false)
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
-  }
+  })
 
   if (!db) return <p className="text-slate-500 text-sm">Loading…</p>
 
@@ -50,7 +46,6 @@ export default function Detection() {
         description="Configure when and how stuck downloads are detected and removed."
       />
 
-      {/* Scheduler */}
       <SectionCard title="Scheduler">
         <div className="flex items-center justify-between py-2.5 border-b border-[var(--bd)]">
           <div className="flex items-center gap-1.5">
@@ -70,7 +65,6 @@ export default function Detection() {
         </div>
       </SectionCard>
 
-      {/* Thresholds */}
       <SectionCard title="Detection thresholds">
         {[
           {
@@ -101,7 +95,6 @@ export default function Detection() {
         ))}
       </SectionCard>
 
-      {/* Strikes */}
       <SectionCard title="Strikes">
         <div className="flex items-center justify-between py-2.5 border-b border-[var(--bd)]">
           <div className="flex items-center gap-1.5">
