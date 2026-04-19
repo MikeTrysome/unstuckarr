@@ -81,6 +81,10 @@ def _build_db_out(db: Session) -> DbConfigOut:
         strikes_enabled=cfg["strikes.enabled"],
         strikes_infringing_threshold=cfg["strikes.infringing_threshold"],
         strikes_canceled_threshold=cfg["strikes.canceled_threshold"],
+        detection_slow_speed_enabled=cfg["detection.slow_speed_enabled"],
+        detection_slow_speed_threshold_kb=cfg["detection.slow_speed_threshold_kb"],
+        detection_slow_speed_min_age_minutes=cfg["detection.slow_speed_min_age_minutes"],
+        strikes_slow_threshold=cfg["strikes.slow_threshold"],
     )
 
 
@@ -174,6 +178,14 @@ def update_config(body: FullConfigIn, db: Session = Depends(get_db)):
             updates["strikes.infringing_threshold"] = d.strikes_infringing_threshold
         if d.strikes_canceled_threshold is not None:
             updates["strikes.canceled_threshold"] = d.strikes_canceled_threshold
+        if d.detection_slow_speed_enabled is not None:
+            updates["detection.slow_speed_enabled"] = d.detection_slow_speed_enabled
+        if d.detection_slow_speed_threshold_kb is not None:
+            updates["detection.slow_speed_threshold_kb"] = d.detection_slow_speed_threshold_kb
+        if d.detection_slow_speed_min_age_minutes is not None:
+            updates["detection.slow_speed_min_age_minutes"] = d.detection_slow_speed_min_age_minutes
+        if d.strikes_slow_threshold is not None:
+            updates["strikes.slow_threshold"] = d.strikes_slow_threshold
         if updates:
             db_config.update_many(db, updates)
 

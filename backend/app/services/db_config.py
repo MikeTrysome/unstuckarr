@@ -35,6 +35,10 @@ DEFAULTS: dict[str, Any] = {
     "strikes.enabled": True,
     "strikes.infringing_threshold": 1,   # remove immediately on first strike
     "strikes.canceled_threshold": 3,     # require 3 strikes before removing
+    "strikes.slow_threshold": 3,         # require 3 strikes for slow downloads
+    "detection.slow_speed_enabled": False,
+    "detection.slow_speed_threshold_kb": 500,
+    "detection.slow_speed_min_age_minutes": 10,
     # Connection config (DB-first, env var seeded on startup)
     "connection.sonarr.host": "",
     "connection.sonarr.port": 8989,

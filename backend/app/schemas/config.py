@@ -11,6 +11,10 @@ class DbConfigOut(BaseModel):
     strikes_enabled: bool
     strikes_infringing_threshold: int
     strikes_canceled_threshold: int
+    detection_slow_speed_enabled: bool
+    detection_slow_speed_threshold_kb: int
+    detection_slow_speed_min_age_minutes: int
+    strikes_slow_threshold: int
 
 
 class DbConfigIn(BaseModel):
@@ -23,6 +27,10 @@ class DbConfigIn(BaseModel):
     strikes_enabled: bool | None = None
     strikes_infringing_threshold: int | None = Field(None, ge=1, le=100)
     strikes_canceled_threshold: int | None = Field(None, ge=1, le=100)
+    detection_slow_speed_enabled: bool | None = None
+    detection_slow_speed_threshold_kb: int | None = Field(None, ge=0, le=1_000_000)
+    detection_slow_speed_min_age_minutes: int | None = Field(None, ge=1, le=10080)
+    strikes_slow_threshold: int | None = Field(None, ge=1, le=100)
 
 
 class ConnectionConfigOut(BaseModel):

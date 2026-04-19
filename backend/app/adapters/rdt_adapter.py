@@ -105,12 +105,19 @@ class RdtAdapter(DownloadClientAdapter):
 
         retry_count = int(raw.get("retryCount") or raw.get("RetryCount") or 0)
 
+        raw_speed = raw.get("speed") or raw.get("Speed") or raw.get("downloadSpeed") or None
+        speed_bytes = int(raw_speed) if raw_speed is not None else None
+
+        rdt_id = str(raw.get("id") or raw.get("Id") or "") or None
+
         return TorrentInfo(
             hash=hash_,
             status=str(raw.get("status") or raw.get("Status") or ""),
             error=error if error else None,
             added_at=added_at,
             retry_count=retry_count,
+            speed_bytes=speed_bytes,
+            rdt_id=rdt_id,
             raw=raw,
         )
 
@@ -122,6 +129,17 @@ class RdtAdapter(DownloadClientAdapter):
             if pattern in error_lower:
                 return True, torrent.error
         return False, ""
+
+    def retry_torrent(self, rdt_id: str) -> bool:
+        """Ask RDT-client to retry a torrent by its internal ID."""
+        if not self._login():
+            return False
+        client = self._get_client()
+        try:
+            resp = client.post(f"{self._base_url}/Api/Torrents/{rdt_id}/Retry")
+            return resp.status_code in (200, 204)
+        except Exception:
+            return False
 
     def build_hash_index(self, torrents: list[TorrentInfo]) -> dict[str, TorrentInfo]:
         return {t.hash: t for t in torrents if t.hash}

@@ -10,18 +10,19 @@ from app.models.strike import DownloadStrike
 from app.schemas.queue import StuckItemOut
 from app.services import db_config
 from app.services.arr_service import ArrService
-from app.services.db_config import DEFAULTS
 from app.services.detection import DetectionConfig, find_stuck_items
 
 router = APIRouter(tags=["queue"], dependencies=[Depends(require_auth)])
 
 
-def _get_detection_config() -> DetectionConfig:
-    # Use defaults when called outside a DB session (queue is live-only)
+def _get_detection_config(db) -> DetectionConfig:
     return DetectionConfig(
-        infringing_min_age_minutes=DEFAULTS["detection.infringing_min_age_minutes"],
-        canceled_min_age_minutes=DEFAULTS["detection.canceled_min_age_minutes"],
-        min_retry_count=DEFAULTS["detection.min_retry_count"],
+        infringing_min_age_minutes=db_config.get(db, "detection.infringing_min_age_minutes"),
+        canceled_min_age_minutes=db_config.get(db, "detection.canceled_min_age_minutes"),
+        min_retry_count=db_config.get(db, "detection.min_retry_count"),
+        slow_speed_enabled=db_config.get(db, "detection.slow_speed_enabled"),
+        slow_speed_threshold_kb=db_config.get(db, "detection.slow_speed_threshold_kb"),
+        slow_speed_min_age_minutes=db_config.get(db, "detection.slow_speed_min_age_minutes"),
     )
 
 
@@ -49,7 +50,7 @@ def get_stuck_queue(
         except Exception:
             use_rdt = False
 
-    detection_cfg = _get_detection_config()
+    detection_cfg = _get_detection_config(db)
     results: list[StuckItemOut] = []
 
     for inst in db_config.get_arr_instances_from_db(db):
@@ -71,6 +72,7 @@ def get_stuck_queue(
         # Resolve strike thresholds once per instance loop
         infringing_threshold = db_config.get(db, "strikes.infringing_threshold")
         canceled_threshold   = db_config.get(db, "strikes.canceled_threshold")
+        slow_threshold       = db_config.get(db, "strikes.slow_threshold")
 
         stuck = find_stuck_items(records, rdt_index, use_rdt, detection_cfg)
         for s in stuck:
@@ -88,6 +90,7 @@ def get_stuck_queue(
 
             threshold = (
                 infringing_threshold if s.error_type == "infringing_file"
+                else slow_threshold if s.error_type == "slow_download"
                 else canceled_threshold
             )
 
@@ -102,6 +105,7 @@ def get_stuck_queue(
                 retry_count=rdt.retry_count if rdt else 0,
                 strike_count=strike_count,
                 strike_threshold=threshold,
+                speed_bytes=rdt.speed_bytes if rdt else None,
             ))
 
     return results

@@ -14,6 +14,7 @@ class StuckItemOut(UtcModel):
     retry_count: int
     strike_count: int = 0
     strike_threshold: int = 1
+    speed_bytes: int | None = None
 
 
 class RunOut(UtcModel):

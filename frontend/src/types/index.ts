@@ -32,6 +32,7 @@ export interface StuckItem {
   retry_count: number
   strike_count: number
   strike_threshold: number
+  speed_bytes: number | null
 }
 
 export interface Run {
@@ -76,6 +77,10 @@ export interface DbConfig {
   strikes_enabled: boolean
   strikes_infringing_threshold: number
   strikes_canceled_threshold: number
+  detection_slow_speed_enabled: boolean
+  detection_slow_speed_threshold_kb: number
+  detection_slow_speed_min_age_minutes: number
+  strikes_slow_threshold: number
 }
 
 export interface ConnectionConfig {

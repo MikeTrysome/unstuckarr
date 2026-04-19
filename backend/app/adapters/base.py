@@ -11,6 +11,8 @@ class TorrentInfo(BaseModel):
     error: str | None = None
     added_at: datetime | None = None
     retry_count: int = 0
+    speed_bytes: int | None = None
+    rdt_id: str | None = None
     raw: dict = {}
 
 

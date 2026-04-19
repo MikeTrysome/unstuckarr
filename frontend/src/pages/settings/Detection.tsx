@@ -39,12 +39,54 @@ export default function Detection() {
   const setVal = <K extends keyof DbConfig>(k: K, v: DbConfig[K]) =>
     setDraft((d) => ({ ...d, [k]: v }))
 
+  const slowEnabled = val('detection_slow_speed_enabled') as boolean
+
+  const monitoringModes = [
+    {
+      color: 'bg-red-500',
+      label: 'Infringing file',
+      desc: `removed after ${val('strikes_infringing_threshold')} strike(s) — permanent error, always blocklisted`,
+    },
+    {
+      color: 'bg-amber-500',
+      label: 'Task canceled',
+      desc: `removed after ${val('strikes_canceled_threshold')} strike(s) — soft retry triggered on each strike`,
+    },
+    ...(slowEnabled ? [{
+      color: 'bg-yellow-400',
+      label: 'Slow download',
+      desc: `below ${val('detection_slow_speed_threshold_kb')} KB/s — removed after ${val('strikes_slow_threshold')} strike(s), strikes auto-clear on recovery`,
+    }] : []),
+  ]
+
   return (
     <div className="space-y-5 max-w-2xl">
       <PageHeader
         title="Detection"
-        description="Configure when and how stuck downloads are detected and removed."
+        description="Configure when and how stuck or slow downloads are detected and removed."
       />
+
+      <SectionCard title="Monitoring overview">
+        <p className="text-xs text-slate-500 pb-3 pt-1">
+          What Unstuckarr actively monitors on every scheduler run.
+        </p>
+        <div className="space-y-2.5">
+          {monitoringModes.map(({ color, label, desc }) => (
+            <div key={label} className="flex items-start gap-3">
+              <span className={`mt-1 w-2 h-2 rounded-full flex-shrink-0 ${color}`} />
+              <p className="text-sm">
+                <span className="text-slate-300 font-medium">{label}</span>
+                <span className="text-slate-500"> — {desc}</span>
+              </p>
+            </div>
+          ))}
+          {!slowEnabled && (
+            <p className="text-xs text-slate-600 pt-1">
+              Slow download detection is disabled — enable it below to monitor download speed.
+            </p>
+          )}
+        </div>
+      </SectionCard>
 
       <SectionCard title="Scheduler">
         <div className="flex items-center justify-between py-2.5 border-b border-[var(--bd)]">
@@ -65,7 +107,7 @@ export default function Detection() {
         </div>
       </SectionCard>
 
-      <SectionCard title="Detection thresholds">
+      <SectionCard title="Error detection thresholds">
         {[
           {
             key: 'detection_infringing_min_age_minutes' as keyof DbConfig,
@@ -126,6 +168,56 @@ export default function Detection() {
               className={NUMBER_CLS} />
           </div>
         ))}
+      </SectionCard>
+
+      <SectionCard title="Slow download detection">
+        <div className="flex items-center justify-between py-2.5 border-b border-[var(--bd)]">
+          <div className="flex items-center gap-1.5">
+            <span className="text-sm text-slate-400">Enable slow download detection</span>
+            <Tip text="Detect downloads that are active but downloading below the configured speed threshold. These accumulate strikes just like error-based detections." />
+          </div>
+          <Toggle
+            checked={slowEnabled}
+            onChange={(v) => setVal('detection_slow_speed_enabled', v as never)}
+          />
+        </div>
+
+        <div className={slowEnabled ? '' : 'opacity-40 pointer-events-none'}>
+          {[
+            {
+              key: 'detection_slow_speed_threshold_kb' as keyof DbConfig,
+              label: 'Speed threshold (KB/s)',
+              min: 1,
+              tooltip: 'Downloads below this speed (in KB/s) are considered slow and will accumulate strikes. Example: 500 = flag downloads slower than 500 KB/s.',
+            },
+            {
+              key: 'detection_slow_speed_min_age_minutes' as keyof DbConfig,
+              label: 'Grace period (min)',
+              min: 1,
+              tooltip: 'New downloads are not flagged as slow until they have been running for at least this many minutes. Prevents false positives during the initial connection phase.',
+            },
+            {
+              key: 'strikes_slow_threshold' as keyof DbConfig,
+              label: 'Slow download — strike threshold',
+              min: 1,
+              tooltip: 'Number of consecutive slow detections before a download is removed and re-queued. Default 3 = must be slow across 3 separate runs before removal.',
+            },
+          ].map(({ key, label, min, tooltip }) => (
+            <div key={key} className="flex items-center justify-between py-2.5 border-b border-[var(--bd)] last:border-0 gap-4">
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm text-slate-400">{label}</span>
+                <Tip text={tooltip} />
+              </div>
+              <input type="number" min={min} value={val(key) as number}
+                onChange={(e) => setVal(key, Number(e.target.value) as never)}
+                className={NUMBER_CLS} />
+            </div>
+          ))}
+        </div>
+
+        <p className="text-xs text-slate-500 pt-2 pb-1">
+          Strikes are automatically cleared when a download's speed recovers above the threshold — no manual action needed.
+        </p>
       </SectionCard>
 
       <div>
