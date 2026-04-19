@@ -110,7 +110,7 @@ async def lifespan(app: FastAPI):
     await sched.stop()
 
 
-app = FastAPI(title="Unstuckarr", version="0.1.0", lifespan=lifespan)
+app = FastAPI(title="Unstuckarr", version="0.2.0", lifespan=lifespan)
 
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
@@ -140,7 +140,7 @@ app.include_router(ws.router)
 
 @app.get("/health", tags=["health"])
 def health():
-    return {"status": "ok", "version": "0.1.0"}
+    return {"status": "ok", "version": "0.2.0"}
 
 
 # Serve React SPA — must be registered last

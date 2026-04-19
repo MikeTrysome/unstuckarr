@@ -32,7 +32,7 @@ DEFAULTS: dict[str, Any] = {
     "scheduler.dry_run": False,
     "scheduler.enabled": True,
     "scheduler.interval_minutes": 10,
-    "notifications.apprise_urls": [],
+    "notifications.providers": [],
     "strikes.enabled": True,
     "strikes.infringing_threshold": 1,   # remove immediately on first strike
     "strikes.canceled_threshold": 3,     # require 3 strikes before removing

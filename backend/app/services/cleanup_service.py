@@ -23,6 +23,7 @@ from app.services.detection import (
     is_below_speed_threshold,
 )
 from app.services.log_broadcaster import broadcaster
+from app.services.notification_service import dispatch as _notify_dispatch
 
 
 def _utcnow() -> datetime:
@@ -81,6 +82,22 @@ def _build_detection_config(db: Session) -> DetectionConfig:
         slow_min_completion_pct=db_config.get(db, "detection.slow_min_completion_pct"),
         slow_max_completion_pct=db_config.get(db, "detection.slow_max_completion_pct"),
     )
+
+
+def _notify(
+    db: Session,
+    event: str,
+    title: str,
+    body: str,
+    run_id: str,
+) -> None:
+    """Dispatch notification if providers are configured for this event."""
+    try:
+        providers = db_config.get(db, "notifications.providers") or []
+        if providers:
+            _notify_dispatch(event=event, title=title, body=body, providers=providers)
+    except Exception as exc:
+        _log("WARN", f"Notification dispatch error: {exc}", run_id=run_id)
 
 
 def _auto_clear_recovered_slow_strikes(
@@ -223,6 +240,10 @@ def run_cleanup(dry_run: bool | None = None, triggered_by: str = "scheduler") ->
                         )
                         action = "strike"
                         skip_removal = True
+                        notif_event = "slow_strike" if stuck.error_type == "slow_download" else "strike"
+                        _notify(db, notif_event, f"Unstuckarr — Strike {strike_count}/{threshold}",
+                                f"{title}\nInstance: {instance.name} | Reason: {stuck.error_type.replace('_', ' ')}",
+                                run_id)
                     else:
                         _log(
                             "INFO",
@@ -243,6 +264,9 @@ def run_cleanup(dry_run: bool | None = None, triggered_by: str = "scheduler") ->
                         if ok:
                             _log("INFO", f"Soft retry triggered via RDT for '{title[:60]}'", run_id=run_id)
                             action = "retried"
+                            _notify(db, "retry", "Unstuckarr — Retry",
+                                    f"{title}\nInstance: {instance.name} | Soft retry triggered via RDT",
+                                    run_id)
                         else:
                             _log("WARN", f"Soft retry returned non-OK for '{title[:60]}'", run_id=run_id)
                     except Exception as exc:
@@ -253,6 +277,9 @@ def run_cleanup(dry_run: bool | None = None, triggered_by: str = "scheduler") ->
                         arr.delete_queue_item(item_id)
                         total_removed += 1
                         _log("INFO", f"Removed: {instance.name} item {item_id}", run_id=run_id)
+                        _notify(db, "removed", "Unstuckarr — Removed",
+                                f"Removed and re-queued: {title}\nInstance: {instance.name} | Reason: {stuck.error_type.replace('_', ' ')}",
+                                run_id)
                         if download_hash:
                             _delete_strike(db, download_hash, instance.name)
                     except Exception as exc:

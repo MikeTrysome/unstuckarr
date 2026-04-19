@@ -1,3 +1,5 @@
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 
@@ -8,7 +10,7 @@ class DbConfigOut(BaseModel):
     scheduler_dry_run: bool
     scheduler_enabled: bool
     scheduler_interval_minutes: int
-    notifications_apprise_urls: list[str]
+    notifications_providers: list[dict[str, Any]]
     strikes_enabled: bool
     strikes_infringing_threshold: int
     strikes_canceled_threshold: int
@@ -27,7 +29,7 @@ class DbConfigIn(BaseModel):
     scheduler_dry_run: bool | None = None
     scheduler_enabled: bool | None = None
     scheduler_interval_minutes: int | None = Field(None, ge=1, le=1440)
-    notifications_apprise_urls: list[str] | None = Field(None, max_length=20)
+    notifications_providers: list[dict[str, Any]] | None = Field(None, max_length=50)
     strikes_enabled: bool | None = None
     strikes_infringing_threshold: int | None = Field(None, ge=1, le=100)
     strikes_canceled_threshold: int | None = Field(None, ge=1, le=100)

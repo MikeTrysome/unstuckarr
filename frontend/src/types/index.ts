@@ -67,6 +67,21 @@ export interface DashboardData {
   next_run_at: string | null
 }
 
+export interface NotificationProvider {
+  id: string
+  name: string
+  enabled: boolean
+  url: string
+  events: string[]
+}
+
+export const NOTIFICATION_EVENTS: { key: string; label: string; description: string }[] = [
+  { key: 'strike',      label: 'Strike (Error)',  description: 'Item gets a strike for an infringing file or task canceled error' },
+  { key: 'slow_strike', label: 'Strike (Slow)',   description: 'Item gets a strike for being below the speed threshold' },
+  { key: 'removed',     label: 'Removed',         description: 'Item is removed from the ARR queue and re-queued automatically' },
+  { key: 'retry',       label: 'Retry',           description: 'Soft retry is triggered via RDT (task canceled only)' },
+]
+
 export interface DbConfig {
   detection_infringing_min_age_minutes: number
   detection_canceled_min_age_minutes: number
@@ -74,7 +89,7 @@ export interface DbConfig {
   scheduler_dry_run: boolean
   scheduler_enabled: boolean
   scheduler_interval_minutes: number
-  notifications_apprise_urls: string[]
+  notifications_providers: NotificationProvider[]
   strikes_enabled: boolean
   strikes_infringing_threshold: number
   strikes_canceled_threshold: number

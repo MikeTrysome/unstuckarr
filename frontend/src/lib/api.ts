@@ -65,6 +65,8 @@ export const api = {
         method: 'POST',
         body: JSON.stringify(creds ?? {}),
       }),
+    testNotification: (providerId: string) =>
+      req<{ ok: boolean }>(`/config/test-notification/${encodeURIComponent(providerId)}`, { method: 'POST' }),
   },
 
   auth: {

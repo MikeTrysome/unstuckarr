@@ -78,7 +78,7 @@ def _build_db_out(db: Session) -> DbConfigOut:
         scheduler_dry_run=cfg["scheduler.dry_run"],
         scheduler_enabled=cfg["scheduler.enabled"],
         scheduler_interval_minutes=cfg["scheduler.interval_minutes"],
-        notifications_apprise_urls=cfg["notifications.apprise_urls"],
+        notifications_providers=cfg["notifications.providers"],
         strikes_enabled=cfg["strikes.enabled"],
         strikes_infringing_threshold=cfg["strikes.infringing_threshold"],
         strikes_canceled_threshold=cfg["strikes.canceled_threshold"],
@@ -175,8 +175,8 @@ def update_config(body: FullConfigIn, db: Session = Depends(get_db)):
             updates["scheduler.enabled"] = d.scheduler_enabled
         if d.scheduler_interval_minutes is not None:
             updates["scheduler.interval_minutes"] = d.scheduler_interval_minutes
-        if d.notifications_apprise_urls is not None:
-            updates["notifications.apprise_urls"] = d.notifications_apprise_urls
+        if d.notifications_providers is not None:
+            updates["notifications.providers"] = d.notifications_providers
         if d.strikes_enabled is not None:
             updates["strikes.enabled"] = d.strikes_enabled
         if d.strikes_infringing_threshold is not None:
@@ -202,6 +202,24 @@ def update_config(body: FullConfigIn, db: Session = Depends(get_db)):
                 _sched.reschedule(updates["scheduler.interval_minutes"])
 
     return FullConfigOut(connections=_build_connection_out(db), db=_build_db_out(db))
+
+
+@router.post("/test-notification/{provider_id}")
+def test_notification(provider_id: str, db: Session = Depends(get_db)):
+    """Send a test notification to a specific provider by its ID."""
+    providers: list = db_config.get(db, "notifications.providers") or []
+    provider = next((p for p in providers if p.get("id") == provider_id), None)
+    if provider is None:
+        raise HTTPException(status_code=404, detail="Provider not found")
+    if not provider.get("url", "").strip():
+        raise HTTPException(status_code=400, detail="Provider has no URL configured")
+    from app.services.notification_service import send
+    ok = send(
+        title="Unstuckarr — Test notification",
+        body=f"This is a test notification from Unstuckarr for provider: {provider.get('name', '?')}",
+        url=provider["url"],
+    )
+    return {"ok": ok}
 
 
 @router.post("/test-connection")
