@@ -22,6 +22,8 @@ async def ws_logs(websocket: WebSocket, token: str | None = Query(None)):
         return
 
     await websocket.accept()
+    for msg in broadcaster.get_history():
+        await websocket.send_text(json.dumps(msg))
     queue = broadcaster.subscribe()
     try:
         while True:

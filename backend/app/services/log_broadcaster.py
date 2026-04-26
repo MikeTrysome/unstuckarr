@@ -2,16 +2,23 @@ from __future__ import annotations
 
 import asyncio
 import datetime
+from collections import deque
 from typing import Set
+
+_HISTORY_SIZE = 500
 
 
 class LogBroadcaster:
     def __init__(self):
         self._subscribers: Set[asyncio.Queue] = set()
         self._loop: asyncio.AbstractEventLoop | None = None
+        self._history: deque[dict] = deque(maxlen=_HISTORY_SIZE)
 
     def set_loop(self, loop: asyncio.AbstractEventLoop):
         self._loop = loop
+
+    def get_history(self) -> list[dict]:
+        return list(self._history)
 
     def subscribe(self) -> asyncio.Queue:
         q: asyncio.Queue = asyncio.Queue(maxsize=50)
@@ -38,6 +45,7 @@ class LogBroadcaster:
 
     def _distribute(self, msg: dict):
         """Run on the event loop thread — distribute to all subscriber queues."""
+        self._history.append(msg)
         dead: Set[asyncio.Queue] = set()
         for q in self._subscribers:
             try:

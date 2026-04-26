@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { api } from '../lib/api'
-import type { StuckItem } from '../types'
+import type { MonitoringItem, StuckItem } from '../types'
 import { usePolling } from '../hooks/usePolling'
-import { AlertTriangle, RefreshCw } from 'lucide-react'
+import { AlertTriangle, Eye, RefreshCw } from 'lucide-react'
 
 const ERROR_LABELS: Record<string, { label: string; color: string }> = {
   infringing_file: { label: 'Infringing file', color: 'text-red-400 bg-red-500/10 border-red-500/20' },
@@ -22,8 +22,24 @@ function formatSpeed(bytes: number | null): string {
   return `${Math.round(kb)} KB/s`
 }
 
+function StrikeBar({ count, threshold }: { count: number; threshold: number }) {
+  const pct = threshold > 0 ? Math.min(count / threshold, 1) : 0
+  const color = pct >= 1 ? 'bg-red-500' : pct > 0 ? 'bg-amber-400' : 'bg-slate-600'
+  return (
+    <div className="flex items-center gap-2">
+      <div className="w-16 h-1.5 rounded-full bg-white/10 overflow-hidden">
+        <div className={`h-full rounded-full transition-all ${color}`} style={{ width: `${pct * 100}%` }} />
+      </div>
+      <span className={`text-xs font-medium ${pct >= 1 ? 'text-red-400' : pct > 0 ? 'text-amber-400' : 'text-slate-500'}`}>
+        {count}/{threshold}
+      </span>
+    </div>
+  )
+}
+
 export default function Queue() {
-  const [items, setItems] = useState<StuckItem[]>([])
+  const [stuck, setStuck] = useState<StuckItem[]>([])
+  const [monitoring, setMonitoring] = useState<MonitoringItem[]>([])
   const [filter, setFilter] = useState<string>('')
   const [loading, setLoading] = useState(true)
   const [running, setRunning] = useState(false)
@@ -31,7 +47,12 @@ export default function Queue() {
 
   const load = async () => {
     try {
-      setItems(await api.queue.getStuck(filter || undefined))
+      const [s, m] = await Promise.all([
+        api.queue.getStuck(filter || undefined),
+        api.queue.getMonitoring(filter || undefined),
+      ])
+      setStuck(s)
+      setMonitoring(m)
       setError(null)
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Error')
@@ -45,13 +66,15 @@ export default function Queue() {
   const triggerRun = async (dry: boolean) => {
     setRunning(true)
     await (dry ? api.actions.dryRun() : api.actions.execute()).catch(() => {})
-    setTimeout(() => setRunning(false), 2000)
+    setTimeout(() => { load(); setRunning(false) }, 2000)
   }
 
-  const filtered = filter ? items.filter((i) => i.instance_name === filter) : items
+  const filteredStuck      = filter ? stuck.filter((i) => i.instance_name === filter) : stuck
+  const filteredMonitoring = filter ? monitoring.filter((i) => i.instance_name === filter) : monitoring
 
-  const errorCount = filtered.filter((i) => i.error_type !== 'slow_download').length
-  const slowCount  = filtered.filter((i) => i.error_type === 'slow_download').length
+  const errorCount = filteredStuck.filter((i) => i.error_type !== 'slow_download').length
+  const slowCount  = filteredStuck.filter((i) => i.error_type === 'slow_download').length
+  const isEmpty    = filteredStuck.length === 0 && filteredMonitoring.length === 0
 
   return (
     <div className="space-y-4">
@@ -65,7 +88,7 @@ export default function Queue() {
         <div className="flex items-center gap-2">
           <select
             value={filter}
-            onChange={(e) => setFilter(e.target.value)}
+            onChange={(e) => { setFilter(e.target.value) }}
             className="px-3 py-1.5 text-sm bg-[var(--bg-card)] border border-[var(--bd)] rounded-lg text-slate-300"
           >
             <option value="">All instances</option>
@@ -95,67 +118,108 @@ export default function Queue() {
           <RefreshCw size={14} className="animate-spin" />
           Loading...
         </div>
-      ) : filtered.length === 0 ? (
+      ) : isEmpty ? (
         <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--bd)] p-12 text-center">
           <p className="text-slate-400 text-sm">No stuck or slow downloads found</p>
         </div>
       ) : (
-        <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--bd)] overflow-hidden">
-          <div className="px-4 py-3 border-b border-[var(--bd)] flex items-center gap-3">
-            <AlertTriangle size={14} className="text-amber-400" />
-            <span className="text-sm text-slate-300">
-              {errorCount > 0 && <span>{errorCount} stuck</span>}
-              {errorCount > 0 && slowCount > 0 && <span className="text-slate-500"> · </span>}
-              {slowCount > 0 && <span className="text-yellow-400">{slowCount} slow</span>}
-            </span>
-          </div>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-[var(--bd)]">
-                {['Title', 'Instance', 'Status', 'Strikes', 'Speed', 'Added'].map((h) => (
-                  <th key={h} className="px-4 py-2.5 text-left text-xs text-slate-500 font-medium">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((item, i) => {
-                const err = ERROR_LABELS[item.error_type] ?? ERROR_LABELS.other
-                const strikeColor =
-                  item.strike_count === 0 ? 'text-slate-500' :
-                  item.strike_count >= item.strike_threshold ? 'text-red-400' :
-                  'text-amber-400'
-                const isSlow = item.error_type === 'slow_download'
-                return (
-                  <tr key={i} className="border-b border-[var(--bd)]/50 hover:bg-white/2">
-                    <td className="px-4 py-3 text-slate-200 max-w-xs truncate" title={item.title}>
-                      {item.title}
-                    </td>
-                    <td className="px-4 py-3 text-slate-400">{item.instance_name}</td>
-                    <td className="px-4 py-3">
-                      <span className={`text-xs px-2 py-0.5 rounded-full border ${err.color}`}>
-                        {isSlow
-                          ? `Slow · ${formatSpeed(item.speed_bytes)}`
-                          : err.label}
-                      </span>
-                    </td>
-                    <td className={`px-4 py-3 text-sm font-medium ${strikeColor}`}>
-                      {item.strike_count}/{item.strike_threshold}
-                    </td>
-                    <td className="px-4 py-3 text-xs text-slate-500">
-                      {isSlow ? (
-                        <span className="text-yellow-400">{formatSpeed(item.speed_bytes)}</span>
-                      ) : (
-                        <span>—</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-slate-500 text-xs">
-                      {item.added_at ? new Date(item.added_at).toLocaleString() : '—'}
-                    </td>
+        <div className="space-y-4">
+
+          {/* ── Confirmed stuck ── */}
+          {filteredStuck.length > 0 && (
+            <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--bd)] overflow-hidden">
+              <div className="px-4 py-3 border-b border-[var(--bd)] flex items-center gap-3">
+                <AlertTriangle size={14} className="text-red-400" />
+                <span className="text-sm font-medium text-slate-200">Confirmed stuck</span>
+                <span className="text-xs text-slate-500">
+                  {errorCount > 0 && <span>{errorCount} stuck</span>}
+                  {errorCount > 0 && slowCount > 0 && <span> · </span>}
+                  {slowCount > 0 && <span className="text-yellow-400">{slowCount} slow</span>}
+                </span>
+                <span className="ml-auto text-xs text-slate-500">RDT error confirmed — will be acted on</span>
+              </div>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-[var(--bd)]">
+                    {['Title', 'Instance', 'Status', 'Strikes', 'Speed', 'Added'].map((h) => (
+                      <th key={h} className="px-4 py-2.5 text-left text-xs text-slate-500 font-medium">{h}</th>
+                    ))}
                   </tr>
-                )
-              })}
-            </tbody>
-          </table>
+                </thead>
+                <tbody>
+                  {filteredStuck.map((item, i) => {
+                    const err = ERROR_LABELS[item.error_type] ?? ERROR_LABELS.other
+                    const isSlow = item.error_type === 'slow_download'
+                    return (
+                      <tr key={i} className="border-b border-[var(--bd)]/50 hover:bg-white/2">
+                        <td className="px-4 py-3 text-slate-200 max-w-xs truncate" title={item.title}>
+                          {item.title}
+                        </td>
+                        <td className="px-4 py-3 text-slate-400">{item.instance_name}</td>
+                        <td className="px-4 py-3">
+                          <span className={`text-xs px-2 py-0.5 rounded-full border ${err.color}`}>
+                            {isSlow ? `Slow · ${formatSpeed(item.speed_bytes)}` : err.label}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <StrikeBar count={item.strike_count} threshold={item.strike_threshold} />
+                        </td>
+                        <td className="px-4 py-3 text-xs text-slate-500">
+                          {isSlow ? <span className="text-yellow-400">{formatSpeed(item.speed_bytes)}</span> : <span>—</span>}
+                        </td>
+                        <td className="px-4 py-3 text-slate-500 text-xs">
+                          {item.added_at ? new Date(item.added_at).toLocaleString() : '—'}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* ── Monitoring (ARR warning, awaiting RDT confirmation) ── */}
+          {filteredMonitoring.length > 0 && (
+            <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--bd)] overflow-hidden">
+              <div className="px-4 py-3 border-b border-[var(--bd)] flex items-center gap-3">
+                <Eye size={14} className="text-amber-400" />
+                <span className="text-sm font-medium text-slate-200">Monitoring</span>
+                <span className="text-xs text-slate-500">{filteredMonitoring.length} item{filteredMonitoring.length !== 1 ? 's' : ''}</span>
+                <span className="ml-auto text-xs text-slate-500">ARR warning — awaiting RDT error confirmation</span>
+              </div>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-[var(--bd)]">
+                    {['Title', 'Instance', 'ARR error', 'Strikes', 'Added'].map((h) => (
+                      <th key={h} className="px-4 py-2.5 text-left text-xs text-slate-500 font-medium">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredMonitoring.map((item, i) => (
+                    <tr key={i} className="border-b border-[var(--bd)]/50 hover:bg-white/2">
+                      <td className="px-4 py-3 text-slate-300 max-w-xs truncate" title={item.title}>
+                        {item.title}
+                      </td>
+                      <td className="px-4 py-3 text-slate-400">{item.instance_name}</td>
+                      <td className="px-4 py-3">
+                        <span className="text-xs text-amber-400/80">
+                          {item.arr_error_message ?? 'Warning'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <StrikeBar count={item.strike_count} threshold={item.strike_threshold} />
+                      </td>
+                      <td className="px-4 py-3 text-slate-500 text-xs">
+                        {item.added_at ? new Date(item.added_at).toLocaleString() : '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
         </div>
       )}
     </div>

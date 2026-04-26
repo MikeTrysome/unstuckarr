@@ -105,7 +105,13 @@ class RdtAdapter(DownloadClientAdapter):
 
         retry_count = int(raw.get("retryCount") or raw.get("RetryCount") or 0)
 
-        raw_speed = raw.get("speed") or raw.get("Speed") or raw.get("downloadSpeed") or None
+        raw_speed = (
+            raw.get("rdSpeed")
+            or raw.get("speed")
+            or raw.get("Speed")
+            or raw.get("downloadSpeed")
+            or None
+        )
         speed_bytes = int(raw_speed) if raw_speed is not None else None
 
         rdt_id = str(raw.get("id") or raw.get("Id") or "") or None

@@ -21,6 +21,17 @@ export interface EventListResponse {
   page_size: number
 }
 
+export interface MonitoringItem {
+  arr_queue_id: number | null
+  title: string
+  instance_name: string
+  download_hash: string | null
+  arr_error_message: string | null
+  added_at: string | null
+  strike_count: number
+  strike_threshold: number
+}
+
 export interface StuckItem {
   arr_queue_id: number | null
   title: string

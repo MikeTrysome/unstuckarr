@@ -1,4 +1,4 @@
-import type { CleanupEvent, ConnectionConfigUpdate, DashboardData, DbConfig, EventListResponse, FullConfig, Run, RunListResponse, StuckItem } from '../types'
+import type { CleanupEvent, ConnectionConfigUpdate, DashboardData, DbConfig, EventListResponse, FullConfig, MonitoringItem, Run, RunListResponse, StuckItem } from '../types'
 import { clearToken, getToken } from './auth'
 
 const BASE = '/api'
@@ -33,6 +33,8 @@ export const api = {
   queue: {
     getStuck: (instance?: string) =>
       req<StuckItem[]>(`/queue${instance ? `?instance=${encodeURIComponent(instance)}` : ''}`),
+    getMonitoring: (instance?: string) =>
+      req<MonitoringItem[]>(`/queue/monitoring${instance ? `?instance=${encodeURIComponent(instance)}` : ''}`),
     getRdtTorrents: () => req<unknown[]>('/queue/rdt-torrents'),
   },
 

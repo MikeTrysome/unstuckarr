@@ -3,6 +3,17 @@ from datetime import datetime
 from app.schemas import UtcModel
 
 
+class MonitoringItemOut(UtcModel):
+    arr_queue_id: int | None
+    title: str
+    instance_name: str
+    download_hash: str | None
+    arr_error_message: str | None
+    added_at: datetime | None
+    strike_count: int = 0
+    strike_threshold: int = 1
+
+
 class StuckItemOut(UtcModel):
     arr_queue_id: int | None
     title: str
