@@ -35,6 +35,8 @@ class ArrService:
                 raise RuntimeError(f"Queue fetch failed for {self._instance.name}: {exc.__class__.__name__}") from exc
 
             records: list[dict] = data.get("records", [])
+            if not records:
+                break
             all_records.extend(records)
 
             if len(all_records) >= data.get("totalRecords", 0):

@@ -50,7 +50,7 @@ export default function Dashboard() {
   const lastRun = data.last_run
   const statusIcon = lastRun?.status === 'success'
     ? <CheckCircle size={14} className="text-green-400" />
-    : lastRun?.status === 'error'
+    : lastRun?.status === 'error' || lastRun?.status === 'interrupted'
     ? <XCircle size={14} className="text-red-400" />
     : <RefreshCw size={14} className="text-amber-400" />
 

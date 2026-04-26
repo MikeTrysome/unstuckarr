@@ -99,11 +99,26 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         return response
 
 
+def _mark_stale_runs() -> None:
+    """Mark any 'running' entries left over from a previous process as 'interrupted'."""
+    from app.models.run import SchedulerRun
+    db = SessionLocal()
+    try:
+        stale = db.query(SchedulerRun).filter(SchedulerRun.status == "running").all()
+        for run in stale:
+            run.status = "interrupted"
+        if stale:
+            db.commit()
+    finally:
+        db.close()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
     _init_auth()
     _init_connections()
+    _mark_stale_runs()
     broadcaster.set_loop(__import__("asyncio").get_event_loop())
     await sched.start()
     yield
