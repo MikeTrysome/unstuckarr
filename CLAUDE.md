@@ -12,6 +12,7 @@ FastAPI + React Docker service that detects and removes stuck downloads from Son
 - Auth: bcrypt + JWT HS256 (7-day expiry) — login rate-limited to 10/min via slowapi
 - Notifications: Apprise (`notification_service.py`) — configured via Settings UI, not env vars
 - SQLite WAL mode, sync SQLAlchemy (`check_same_thread=False`)
+- **DateTime columns:** always use `UTCDateTime` from `app.database` (not plain `DateTime`) — tags naive SQLite datetimes as UTC on read, preventing timezone display bugs in the frontend
 - No CORS in production — same-origin only; only enabled when `CORS_ORIGINS` env var is set
 
 ## ARR Instances (home setup)

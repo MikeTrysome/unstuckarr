@@ -16,7 +16,25 @@ datetime.now(timezone.utc)
 datetime.utcnow()
 ```
 
-Naive datetimes from SQLite are tagged UTC by `UtcModel._coerce_naive_to_utc` before API serialization. Do not add timezone info manually in routers — let UtcModel handle it.
+### SQLAlchemy DateTime columns — always use `UTCDateTime`
+
+SQLite stores datetimes as naive strings. Plain `DateTime` columns return naive datetimes on read; `isoformat()` then produces strings without timezone info, which browsers interpret as local time — causing timestamps to appear hours off for non-UTC users.
+
+**Every `DateTime` column in a model must use `UTCDateTime` from `app.database`:**
+
+```python
+# CORRECT
+from app.database import Base, UTCDateTime
+
+class MyModel(Base):
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, nullable=False, default=_utcnow)
+
+# WRONG — returns naive datetime from SQLite
+from sqlalchemy import DateTime
+created_at: Mapped[datetime] = mapped_column(DateTime, ...)
+```
+
+`UTCDateTime` is a `TypeDecorator` that tags naive datetimes as UTC on read. It is a no-op for already-aware datetimes. Define it once in `app/database.py`; import from there in every model.
 
 ## Pydantic Response Schemas
 
