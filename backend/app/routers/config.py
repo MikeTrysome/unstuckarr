@@ -23,6 +23,8 @@ class ConnectionTestBody(BaseModel):
     host: str | None = None
     port: int | None = None
     api_key: str | None = None
+    username: str | None = None
+    password: str | None = None
 
 router = APIRouter(prefix="/config", tags=["config"], dependencies=[Depends(require_auth)])
 
@@ -256,10 +258,10 @@ def test_one_connection(
         rdt_cfg = db_config.get_rdt_config_from_db(db)
         try:
             rdt = RdtAdapter(
-                host=rdt_cfg["host"] or None,
-                port=rdt_cfg["port"] or None,
-                username=rdt_cfg["username"] or None,
-                password=rdt_cfg["password"] or None,
+                host=body.host or rdt_cfg["host"] or None,
+                port=body.port or rdt_cfg["port"] or None,
+                username=body.username or rdt_cfg["username"] or None,
+                password=body.password or rdt_cfg["password"] or None,
             )
             return {"ok": rdt.health_check()}
         except Exception:

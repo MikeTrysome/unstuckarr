@@ -3,11 +3,10 @@ from __future__ import annotations
 import asyncio
 import logging
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime, timezone
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
-
-from app.config import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -34,13 +33,20 @@ async def _run_cleanup_job():
 
 
 async def start():
-    settings = get_settings()
     if not _scheduler.running:
+        from app.database import SessionLocal
+        from app.services.db_config import get as db_get
+        db = SessionLocal()
+        try:
+            interval_minutes = db_get(db, "scheduler.interval_minutes")
+        finally:
+            db.close()
         _scheduler.add_job(
             _run_cleanup_job,
-            trigger=IntervalTrigger(minutes=settings.interval_minutes),
+            trigger=IntervalTrigger(minutes=interval_minutes),
             id="cleanup_job",
             replace_existing=True,
+            next_run_time=datetime.now(timezone.utc),
         )
         _scheduler.start()
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { CheckCircle, Pencil, XCircle } from 'lucide-react'
+import { CheckCircle, Pencil, Trash2, XCircle } from 'lucide-react'
 import { api } from '../../lib/api'
 import type { ConnectionConfig, ConnectionConfigUpdate, FullConfig } from '../../types'
 import { INPUT_CLS, MField, Modal, PageHeader, PORT_CLS, SectionCard, ServerError, Toggle } from '../../components/settings/shared'
@@ -66,11 +66,12 @@ function buildUpdate(d: Drafts): ConnectionConfigUpdate {
 // ─── Instance row (inside group card) ────────────────────────────────────────
 
 function InstanceRow({
-  label, draft, onEdit, configured,
+  label, draft, onEdit, onClear, configured,
 }: {
   label: string
   draft: ArrDraft | RdtDraft
   onEdit: () => void
+  onClear: () => void
   configured: boolean
 }) {
   return (
@@ -89,13 +90,24 @@ function InstanceRow({
           )}
         </div>
       </div>
-      <button
-        onClick={onEdit}
-        className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 transition-colors"
-      >
-        <Pencil size={12} />
-        Edit
-      </button>
+      <div className="flex items-center gap-1 shrink-0">
+        <button
+          onClick={onEdit}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 transition-colors"
+        >
+          <Pencil size={12} />
+          Edit
+        </button>
+        {configured && (
+          <button
+            onClick={onClear}
+            className="p-1.5 text-slate-500 hover:text-red-400 transition-colors"
+            title="Remove"
+          >
+            <Trash2 size={14} />
+          </button>
+        )}
+      </div>
     </div>
   )
 }
@@ -179,7 +191,12 @@ function RdtModal({
 
   const test = async () => {
     setTestState('testing')
-    const res = await api.config.testOne('rdt').catch(() => null)
+    const res = await api.config.testOne('rdt', {
+      host: local.host || undefined,
+      port: local.port > 0 ? local.port : undefined,
+      username: local.username || undefined,
+      password: local.password || undefined,
+    }).catch(() => null)
     setTestState(res?.ok ? 'ok' : 'fail')
   }
 
@@ -203,7 +220,7 @@ function RdtModal({
           onChange={(e) => setLocal({ ...local, username: e.target.value })}
           className={INPUT_CLS} />
       </MField>
-      <MField label="Password" tooltip="Your RDT-client login password">
+      <MField label="Password" tooltip="Your RDT-client login password. Stored encrypted — never as plain text.">
         <input type="password" value={local.password}
           placeholder={passwordSet ? 'Leave blank to keep current' : 'Enter password'}
           onChange={(e) => setLocal({ ...local, password: e.target.value })}
@@ -271,6 +288,22 @@ export default function Connections() {
     save(updated, prev)
   }
 
+  const handleArrClear = (key: ArrKey) => {
+    if (!drafts) return
+    const prev = drafts
+    const updated = { ...drafts, [key]: { host: '', port: 0, api_key: '', enabled: false } }
+    setDrafts(updated)
+    save(updated, prev)
+  }
+
+  const handleRdtClear = () => {
+    if (!drafts) return
+    const prev = drafts
+    const updated = { ...drafts, rdt: { host: '', port: 0, username: '', password: '', enabled: false } }
+    setDrafts(updated)
+    save(updated, prev)
+  }
+
   if (loadError) return <ServerError onRetry={load} />
   if (!config || !drafts) return <p className="text-slate-500 text-sm">Loading…</p>
 
@@ -280,26 +313,26 @@ export default function Connections() {
     <div className="space-y-5 max-w-2xl">
       <PageHeader
         title="Connections"
-        description="Configure your ARR apps and download client. API keys are stored encrypted."
+        description="Configure your ARR apps and download client. API keys and passwords are stored encrypted — never as plain text."
       />
 
       <SectionCard title="Sonarr">
         <InstanceRow label="Sonarr" draft={drafts.sonarr} configured={Boolean(drafts.sonarr.host)}
-          onEdit={() => setEditing('sonarr')} />
+          onEdit={() => setEditing('sonarr')} onClear={() => handleArrClear('sonarr')} />
         <InstanceRow label="Sonarr 4K" draft={drafts.sonarr4k} configured={Boolean(drafts.sonarr4k.host)}
-          onEdit={() => setEditing('sonarr4k')} />
+          onEdit={() => setEditing('sonarr4k')} onClear={() => handleArrClear('sonarr4k')} />
       </SectionCard>
 
       <SectionCard title="Radarr">
         <InstanceRow label="Radarr" draft={drafts.radarr} configured={Boolean(drafts.radarr.host)}
-          onEdit={() => setEditing('radarr')} />
+          onEdit={() => setEditing('radarr')} onClear={() => handleArrClear('radarr')} />
         <InstanceRow label="Radarr 4K" draft={drafts.radarr4k} configured={Boolean(drafts.radarr4k.host)}
-          onEdit={() => setEditing('radarr4k')} />
+          onEdit={() => setEditing('radarr4k')} onClear={() => handleArrClear('radarr4k')} />
       </SectionCard>
 
       <SectionCard title="Downloaders">
         <InstanceRow label="RDT-client" draft={drafts.rdt} configured={Boolean(drafts.rdt.host)}
-          onEdit={() => setEditing('rdt')} />
+          onEdit={() => setEditing('rdt')} onClear={handleRdtClear} />
       </SectionCard>
       {editing && editing !== 'rdt' && (
         <ArrModal

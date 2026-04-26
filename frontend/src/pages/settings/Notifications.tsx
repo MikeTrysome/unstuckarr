@@ -14,6 +14,9 @@ interface ProviderTypeInfo {
   subtitle: string
   placeholder: string
   icon: React.ReactNode
+  urlLabel: string
+  urlHelpText: string
+  urlHelpHref: string
 }
 
 const PROVIDER_TYPES: ProviderTypeInfo[] = [
@@ -23,6 +26,9 @@ const PROVIDER_TYPES: ProviderTypeInfo[] = [
     subtitle: 'github.com/caronc/apprise',
     placeholder: 'schema://...',
     icon: <Megaphone size={28} />,
+    urlLabel: 'Apprise URL',
+    urlHelpText: 'Apprise URL formats →',
+    urlHelpHref: 'https://github.com/caronc/apprise/wiki',
   },
   {
     type: 'discord',
@@ -30,6 +36,9 @@ const PROVIDER_TYPES: ProviderTypeInfo[] = [
     subtitle: 'discord.com',
     placeholder: 'discord://webhook_id/token',
     icon: <MessageSquare size={28} />,
+    urlLabel: 'Webhook URL',
+    urlHelpText: 'How to create a Discord webhook →',
+    urlHelpHref: 'https://support.discord.com/hc/en-us/articles/228383668',
   },
   {
     type: 'gotify',
@@ -37,6 +46,9 @@ const PROVIDER_TYPES: ProviderTypeInfo[] = [
     subtitle: 'gotify.net',
     placeholder: 'gotify://hostname/token',
     icon: <Ghost size={28} />,
+    urlLabel: 'Gotify URL',
+    urlHelpText: 'Gotify docs →',
+    urlHelpHref: 'https://gotify.net/docs',
   },
   {
     type: 'notifiarr',
@@ -44,6 +56,9 @@ const PROVIDER_TYPES: ProviderTypeInfo[] = [
     subtitle: 'notifiarr.com',
     placeholder: 'notifiarr://apikey/',
     icon: <Crosshair size={28} />,
+    urlLabel: 'Notifiarr URL',
+    urlHelpText: 'Notifiarr docs →',
+    urlHelpHref: 'https://notifiarr.wiki',
   },
   {
     type: 'ntfy',
@@ -51,6 +66,9 @@ const PROVIDER_TYPES: ProviderTypeInfo[] = [
     subtitle: 'ntfy.sh',
     placeholder: 'ntfy://ntfy.sh/topic',
     icon: <Terminal size={28} />,
+    urlLabel: 'ntfy URL',
+    urlHelpText: 'ntfy docs →',
+    urlHelpHref: 'https://docs.ntfy.sh',
   },
   {
     type: 'pushover',
@@ -58,6 +76,9 @@ const PROVIDER_TYPES: ProviderTypeInfo[] = [
     subtitle: 'pushover.net',
     placeholder: 'pover://user@token',
     icon: <Smartphone size={28} />,
+    urlLabel: 'Pushover URL',
+    urlHelpText: 'Pushover API docs →',
+    urlHelpHref: 'https://pushover.net/api',
   },
   {
     type: 'telegram',
@@ -65,6 +86,9 @@ const PROVIDER_TYPES: ProviderTypeInfo[] = [
     subtitle: 'core.telegram.org/bots',
     placeholder: 'tgram://bottoken/chatid',
     icon: <Send size={28} />,
+    urlLabel: 'Telegram URL',
+    urlHelpText: 'Telegram Bot API docs →',
+    urlHelpHref: 'https://core.telegram.org/bots/api',
   },
 ]
 
@@ -169,7 +193,7 @@ function ProviderModal({ provider, onSave, onClose }: ProviderModalProps) {
         <MField label="Name" tooltip="A unique name to identify this notification provider.">
           <input
             type="text"
-            placeholder="e.g. Discord alerts"
+            placeholder={`e.g. ${pt.name} alerts`}
             value={draft.name}
             onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
             className={INPUT_CLS}
