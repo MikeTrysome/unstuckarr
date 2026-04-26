@@ -286,7 +286,25 @@ def run_cleanup(dry_run: bool | None = None, triggered_by: str = "scheduler") ->
                         _log("ERROR", f"Remove failed: {exc}", run_id=run_id)
                         action = "error"
                 elif dry_run:
-                    total_would_remove += 1
+                    if strikes_enabled and download_hash:
+                        existing = db.query(DownloadStrike).filter_by(
+                            download_hash=download_hash, instance_name=instance.name
+                        ).first()
+                        current_count = existing.strike_count if existing else 0
+                        threshold = _get_strike_threshold(db, stuck.error_type)
+                        simulated = current_count + 1
+                        if simulated >= threshold:
+                            total_would_remove += 1
+                            _log("INFO",
+                                 f"Strike {simulated}/{threshold} — would remove",
+                                 run_id=run_id)
+                        else:
+                            action = "strike"
+                            _log("INFO",
+                                 f"Strike {simulated}/{threshold} — threshold not reached, would skip removal",
+                                 run_id=run_id)
+                    else:
+                        total_would_remove += 1
 
                 try:
                     event = CleanupEvent(
