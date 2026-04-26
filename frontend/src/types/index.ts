@@ -65,6 +65,7 @@ export interface DashboardData {
     dry_run: boolean | null
   }
   next_run_at: string | null
+  scheduler_enabled: boolean
 }
 
 export interface NotificationProvider {

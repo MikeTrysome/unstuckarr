@@ -8,6 +8,7 @@ from app.database import get_db
 from app.models.event import CleanupEvent
 from app.models.run import SchedulerRun
 from app import scheduler as sched
+from app.services import db_config
 
 router = APIRouter(tags=["dashboard"], dependencies=[Depends(require_auth)])
 
@@ -54,4 +55,5 @@ def get_dashboard(db: Session = Depends(get_db)):
             "dry_run": last_run.dry_run if last_run else None,
         },
         "next_run_at": sched.get_next_run_time(),
+        "scheduler_enabled": db_config.get(db, "scheduler.enabled"),
     }

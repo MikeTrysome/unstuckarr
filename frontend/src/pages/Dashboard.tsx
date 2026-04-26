@@ -32,17 +32,17 @@ export default function Dashboard() {
 
   usePolling(load, 15_000)
 
-  const triggerDryRun = async () => {
+  const triggerRun = async (fn: () => Promise<unknown>) => {
     setRunning(true)
-    await api.actions.dryRun().catch(() => {})
-    setRunning(false)
+    await fn().catch(() => {})
+    // Poll more frequently after triggering a run to pick up the result quickly
+    setTimeout(() => load(), 2000)
+    setTimeout(() => load(), 5000)
+    setTimeout(() => { load(); setRunning(false) }, 10_000)
   }
 
-  const triggerExecute = async () => {
-    setRunning(true)
-    await api.actions.execute().catch(() => {})
-    setRunning(false)
-  }
+  const triggerDryRun  = () => triggerRun(api.actions.dryRun)
+  const triggerExecute = () => triggerRun(api.actions.execute)
 
   if (error) return <p className="text-red-400 text-sm">{error}</p>
   if (!data) return <p className="text-slate-500 text-sm">Loading...</p>
@@ -90,7 +90,8 @@ export default function Dashboard() {
         />
         <StatCard
           label="Next run"
-          value={data.next_run_at ? new Date(data.next_run_at).toLocaleString() : '—'}
+          value={data.scheduler_enabled ? (data.next_run_at ? new Date(data.next_run_at).toLocaleString() : '—') : 'Disabled'}
+          sub={!data.scheduler_enabled ? 'Scheduler is turned off in Detection settings' : undefined}
         />
       </div>
 
