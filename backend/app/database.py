@@ -1,6 +1,26 @@
-from sqlalchemy import create_engine, event as sa_event
+from datetime import datetime, timezone
+
+from sqlalchemy import DateTime, create_engine, event as sa_event
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
+from sqlalchemy.types import TypeDecorator
+
 from app.config import get_db_path
+
+
+class UTCDateTime(TypeDecorator):
+    """DateTime column that always returns timezone-aware UTC datetimes.
+
+    SQLite stores datetimes as naive strings. Without this, isoformat() produces
+    strings without a timezone suffix, which browsers interpret as local time —
+    causing timestamps to appear hours off for non-UTC users.
+    """
+    impl = DateTime
+    cache_ok = True
+
+    def process_result_value(self, value: datetime | None, dialect) -> datetime | None:
+        if value is not None and value.tzinfo is None:
+            return value.replace(tzinfo=timezone.utc)
+        return value
 
 
 class Base(DeclarativeBase):

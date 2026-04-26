@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
-from sqlalchemy import Boolean, DateTime, Index, Integer, String, Text
+from sqlalchemy import Boolean, Index, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
-from app.database import Base
+from app.database import Base, UTCDateTime
 
 
 def _utcnow() -> datetime:
@@ -12,7 +12,7 @@ class CleanupEvent(Base):
     __tablename__ = "cleanup_events"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    timestamp: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=_utcnow)
+    timestamp: Mapped[datetime] = mapped_column(UTCDateTime, nullable=False, default=_utcnow)
     instance_name: Mapped[str] = mapped_column(String(32), nullable=False)
     arr_queue_id: Mapped[int | None] = mapped_column(Integer)
     title: Mapped[str] = mapped_column(Text, nullable=False)

@@ -1,9 +1,9 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, Index, Integer, String, UniqueConstraint
+from sqlalchemy import Index, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.database import Base
+from app.database import Base, UTCDateTime
 
 
 def _utcnow() -> datetime:
@@ -25,8 +25,8 @@ class DownloadStrike(Base):
     instance_name: Mapped[str] = mapped_column(String(32), nullable=False)
     error_type: Mapped[str] = mapped_column(String(64), nullable=False)
     strike_count: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
-    first_seen_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=_utcnow)
-    last_seen_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=_utcnow)
+    first_seen_at: Mapped[datetime] = mapped_column(UTCDateTime, nullable=False, default=_utcnow)
+    last_seen_at: Mapped[datetime] = mapped_column(UTCDateTime, nullable=False, default=_utcnow)
 
     __table_args__ = (
         UniqueConstraint("download_hash", "instance_name", name="uq_strike_hash_instance"),
