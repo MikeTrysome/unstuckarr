@@ -117,11 +117,12 @@ def get_completion_pct(arr_item: dict) -> float:
 
 
 def is_below_speed_threshold(torrent: "TorrentInfo", threshold_kb: int) -> bool:
-    """Returns True if the torrent's speed is at or below the threshold.
-    Treats None speed as 0 — if ARR says the item is downloading but RDT reports no
-    speed data, the effective speed is 0 KB/s."""
-    speed = torrent.speed_bytes if torrent.speed_bytes is not None else 0
-    return speed < (threshold_kb * 1024)
+    """Returns True if the torrent's speed is known and below the threshold.
+    None means RDT isn't reporting speed (e.g. torrent already downloaded from seeders,
+    file transfer phase) — skip these to avoid false positives."""
+    if torrent.speed_bytes is None:
+        return False
+    return torrent.speed_bytes < (threshold_kb * 1024)
 
 
 def find_stuck_items(
