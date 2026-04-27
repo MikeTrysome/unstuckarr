@@ -1,4 +1,4 @@
-import type { CleanupEvent, ConnectionConfigUpdate, DashboardData, DbConfig, EventListResponse, FullConfig, MonitoringItem, Run, RunListResponse, StuckItem } from '../types'
+import type { CleanupEvent, ConnectionConfigUpdate, DashboardData, DbConfig, EventListResponse, FullConfig, IgnoreEntry, MonitoringItem, Run, RunListResponse, StuckItem } from '../types'
 import { clearToken, getToken } from './auth'
 
 const BASE = '/api'
@@ -36,6 +36,17 @@ export const api = {
     getMonitoring: (instance?: string) =>
       req<MonitoringItem[]>(`/queue/monitoring${instance ? `?instance=${encodeURIComponent(instance)}` : ''}`),
     getRdtTorrents: () => req<unknown[]>('/queue/rdt-torrents'),
+  },
+
+  ignores: {
+    list: () => req<IgnoreEntry[]>('/ignores'),
+    create: (body: { download_hash: string; instance_name: string; title: string; expires_at: string | null }) =>
+      req<IgnoreEntry>('/ignores', { method: 'POST', body: JSON.stringify(body) }),
+    remove: (id: number) =>
+      fetch(`${BASE}/ignores/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${getToken()}` },
+      }),
   },
 
   events: {

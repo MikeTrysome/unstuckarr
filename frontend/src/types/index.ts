@@ -1,3 +1,12 @@
+export interface IgnoreEntry {
+  id: number
+  download_hash: string
+  instance_name: string
+  title: string
+  expires_at: string | null
+  created_at: string
+}
+
 export interface CleanupEvent {
   id: number
   timestamp: string

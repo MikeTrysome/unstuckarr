@@ -152,6 +152,9 @@ app.include_router(actions.router, prefix="/api")
 app.include_router(config.router, prefix="/api")
 app.include_router(ws.router)
 
+from app.routers import ignores  # noqa: E402
+app.include_router(ignores.router, prefix="/api")
+
 
 @app.get("/health", tags=["health"])
 def health():

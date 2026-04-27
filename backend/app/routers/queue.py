@@ -3,14 +3,25 @@ from sqlalchemy.orm import Session
 
 _VALID_INSTANCES = {"Sonarr", "Sonarr-4K", "Radarr", "Radarr-4K"}
 
+from datetime import datetime, timezone
+
 from app.adapters.rdt_adapter import RdtAdapter
 from app.auth import require_auth
 from app.database import get_db
+from app.models.ignore import DownloadIgnore
 from app.models.strike import DownloadStrike
 from app.schemas.queue import MonitoringItemOut, StuckItemOut
 from app.services import db_config
 from app.services.arr_service import ArrService
 from app.services.detection import DetectionConfig, find_stuck_items
+
+
+def _get_ignored_hashes(db: Session) -> set[str]:
+    now = datetime.now(timezone.utc)
+    return {
+        i.download_hash for i in db.query(DownloadIgnore).all()
+        if i.expires_at is None or i.expires_at > now
+    }
 
 router = APIRouter(tags=["queue"], dependencies=[Depends(require_auth)])
 
@@ -53,6 +64,7 @@ def get_stuck_queue(
             use_rdt = False
 
     detection_cfg = _get_detection_config(db)
+    ignored_hashes = _get_ignored_hashes(db)
     results: list[StuckItemOut] = []
 
     for inst in db_config.get_arr_instances_from_db(db):
@@ -80,6 +92,8 @@ def get_stuck_queue(
         for s in stuck:
             rdt = s.rdt_torrent
             hash_ = (s.arr_item.get("downloadId") or "").lower() or None
+            if hash_ and hash_ in ignored_hashes:
+                continue
 
             # Look up current strike count
             strike_count = 0
@@ -141,6 +155,7 @@ def get_monitoring_queue(
             use_rdt = False
 
     canceled_threshold = db_config.get(db, "strikes.canceled_threshold")
+    ignored_hashes = _get_ignored_hashes(db)
     results: list[MonitoringItemOut] = []
 
     for inst in db_config.get_arr_instances_from_db(db):
@@ -165,6 +180,9 @@ def get_monitoring_queue(
                 continue
 
             hash_ = (item.get("downloadId") or "").lower() or None
+
+            if hash_ and hash_ in ignored_hashes:
+                continue
 
             # Skip items already confirmed by RDT — those show in /queue as stuck
             if use_rdt and hash_:

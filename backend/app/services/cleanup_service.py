@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 from app.adapters.rdt_adapter import RdtAdapter
 from app.database import SessionLocal
 from app.models.event import CleanupEvent
+from app.models.ignore import DownloadIgnore
 from app.models.run import SchedulerRun
 from app.models.strike import DownloadStrike
 from app.services import db_config
@@ -154,6 +155,14 @@ def run_cleanup(dry_run: bool | None = None, triggered_by: str = "scheduler") ->
 
         detection_cfg = _build_detection_config(db)
         strikes_enabled = db_config.get(db, "strikes.enabled")
+
+        # Build ignored-hash set (exclude expired)
+        now = datetime.now(timezone.utc)
+        ignored_hashes: set[str] = {
+            i.download_hash for i in db.query(DownloadIgnore).all()
+            if i.expires_at is None or i.expires_at > now
+        }
+
         total_checked = 0
         total_stuck = 0
         total_removed = 0
@@ -202,6 +211,19 @@ def run_cleanup(dry_run: bool | None = None, triggered_by: str = "scheduler") ->
             _log("INFO", f"{len(records)} items in queue", run_id=run_id)
 
             stuck_items = find_stuck_items(records, rdt_index, use_rdt, detection_cfg)
+
+            # Filter out ignored hashes
+            filtered = []
+            for s in stuck_items:
+                h = (s.arr_item.get("downloadId") or "").lower()
+                if h and h in ignored_hashes:
+                    _log("INFO",
+                         f"Ignored: '{s.arr_item.get('title', '?')[:60]}' (hash on ignore list)",
+                         run_id=run_id)
+                else:
+                    filtered.append(s)
+            stuck_items = filtered
+
             total_stuck += len(stuck_items)
 
             if not stuck_items:
