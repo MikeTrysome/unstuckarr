@@ -3,6 +3,7 @@ name: Build & Push to Docker Hub
 on:
   push:
     branches: ["main"]
+    tags: ["v*"]
   workflow_dispatch:  # allows manual trigger from GitHub UI
 
 jobs:
@@ -22,15 +23,27 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Determine version and tags
+        id: meta
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF#refs/tags/v}"
+            TAGS="dockersftw/unstuckarr:latest,dockersftw/unstuckarr:${VERSION}"
+          else
+            VERSION="dev"
+            TAGS="dockersftw/unstuckarr:latest,dockersftw/unstuckarr:${{ github.sha }}"
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "tags=${TAGS}" >> $GITHUB_OUTPUT
+
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
           no-cache: true
-          tags: |
-            dockersftw/unstuckarr:latest
-            dockersftw/unstuckarr:${{ github.sha }}
+          build-args: APP_VERSION=${{ steps.meta.outputs.version }}
+          tags: ${{ steps.meta.outputs.tags }}
 
       - name: Update Docker Hub description
         uses: peter-evans/dockerhub-description@v4
