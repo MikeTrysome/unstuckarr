@@ -37,6 +37,7 @@ DEFAULTS: dict[str, Any] = {
     "strikes.infringing_threshold": 1,        # remove immediately on first strike
     "strikes.canceled_threshold": 3,          # require 3 strikes before removing
     "strikes.slow_threshold": 3,              # require 3 strikes for slow downloads
+    "strikes.stalled_threshold": 3,           # require 3 strikes for stalled (0 seeders) downloads
     "strikes.import_pending_threshold": 2,    # 2 strikes = ~1 run interval after first detection
     "detection.slow_speed_enabled": False,
     "detection.slow_speed_threshold_kb": 500,
@@ -44,6 +45,7 @@ DEFAULTS: dict[str, Any] = {
     "detection.slow_min_completion_pct": 0,
     "detection.slow_max_completion_pct": 95,
     "detection.import_pending_min_age_minutes": 15,
+    "detection.stalled_min_age_minutes": 30,
     # Connection config (DB-first, env var seeded on startup)
     "connection.sonarr.host": "",
     "connection.sonarr.port": 8989,

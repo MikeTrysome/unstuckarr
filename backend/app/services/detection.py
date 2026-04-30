@@ -29,6 +29,7 @@ class DetectionConfig:
     slow_min_completion_pct: int = 0
     slow_max_completion_pct: int = 95
     import_pending_min_age_minutes: int = 0  # unused when strikes enabled — threshold=2 provides the delay
+    stalled_min_age_minutes: int = 30
 
 
 @dataclass
@@ -250,6 +251,33 @@ def find_stuck_items(
             error_type="import_pending",
             error_message=error_msg,
         ))
+
+    # ── Stalled detection (0 seeders, no RDT error) ──────────────────────────
+    if use_rdt_crosscheck and rdt_index:
+        for item in arr_records:
+            if not is_stuck_in_arr(item):
+                continue
+
+            download_id = (item.get("downloadId") or "").lower()
+            rdt_torrent = rdt_index.get(download_id)
+            if rdt_torrent is None:
+                continue
+
+            if rdt_torrent.error:
+                continue  # Already handled by error-based detection above
+
+            if rdt_torrent.rd_seeders is None or rdt_torrent.rd_seeders > 0:
+                continue  # Has seeders or unknown — not stalled
+
+            if _age_minutes(rdt_torrent) < config.stalled_min_age_minutes:
+                continue
+
+            results.append(StuckItem(
+                arr_item=item,
+                rdt_torrent=rdt_torrent,
+                error_type="stalled",
+                error_message=f"0 seeders — RD cannot download (age: {int(_age_minutes(rdt_torrent))} min)",
+            ))
 
     # ── Slow-speed detection ──────────────────────────────────────────────────
     if config.slow_speed_enabled and config.slow_speed_threshold_kb > 0 and rdt_index:

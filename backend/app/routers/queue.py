@@ -87,6 +87,7 @@ def get_stuck_queue(
         infringing_threshold = db_config.get(db, "strikes.infringing_threshold")
         canceled_threshold   = db_config.get(db, "strikes.canceled_threshold")
         slow_threshold       = db_config.get(db, "strikes.slow_threshold")
+        stalled_threshold    = db_config.get(db, "strikes.stalled_threshold")
 
         stuck = find_stuck_items(records, rdt_index, use_rdt, detection_cfg)
         for s in stuck:
@@ -107,6 +108,7 @@ def get_stuck_queue(
             threshold = (
                 infringing_threshold if s.error_type == "infringing_file"
                 else slow_threshold if s.error_type == "slow_download"
+                else stalled_threshold if s.error_type == "stalled"
                 else canceled_threshold
             )
 

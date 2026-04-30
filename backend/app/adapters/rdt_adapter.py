@@ -125,6 +125,9 @@ class RdtAdapter(DownloadClientAdapter):
 
         rdt_id = str(raw.get("id") or raw.get("Id") or "") or None
 
+        raw_seeders = raw.get("rdSeeders") or raw.get("seeders") or raw.get("Seeders")
+        rd_seeders = int(raw_seeders) if raw_seeders is not None else None
+
         return TorrentInfo(
             hash=hash_,
             status=str(raw.get("status") or raw.get("Status") or ""),
@@ -133,6 +136,7 @@ class RdtAdapter(DownloadClientAdapter):
             completed_at=completed_at,
             retry_count=retry_count,
             speed_bytes=speed_bytes,
+            rd_seeders=rd_seeders,
             rdt_id=rdt_id,
             raw=raw,
         )
