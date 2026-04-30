@@ -41,7 +41,7 @@ class DbConfigIn(BaseModel):
     detection_slow_min_completion_pct: int | None = Field(None, ge=0, le=100)
     detection_slow_max_completion_pct: int | None = Field(None, ge=0, le=100)
     strikes_slow_threshold: int | None = Field(None, ge=1, le=100)
-    detection_stalled_min_age_minutes: int | None = Field(None, ge=1, le=10080)
+    detection_stalled_min_age_minutes: int | None = Field(None, ge=0, le=10080)
     strikes_stalled_threshold: int | None = Field(None, ge=1, le=100)
 
 
