@@ -156,9 +156,18 @@ from app.routers import ignores  # noqa: E402
 app.include_router(ignores.router, prefix="/api")
 
 
+def _read_version() -> str:
+    from pathlib import Path
+    vf = Path(__file__).parent.parent / "VERSION"
+    try:
+        return vf.read_text().strip()
+    except Exception:
+        return os.environ.get("APP_VERSION", "dev")
+
+
 @app.get("/health", tags=["health"])
 def health():
-    return {"status": "ok", "version": os.environ.get("APP_VERSION", "dev")}
+    return {"status": "ok", "version": _read_version()}
 
 
 # Serve React SPA — must be registered last

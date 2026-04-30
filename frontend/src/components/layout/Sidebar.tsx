@@ -74,7 +74,7 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
   useEffect(() => {
     fetch('/health')
       .then((r) => r.json())
-      .then((d) => setVersion(d.version ? String(d.version).slice(0, 7) : ''))
+      .then((d) => setVersion(d.version ? String(d.version) : ''))
       .catch(() => {})
   }, [])
 
