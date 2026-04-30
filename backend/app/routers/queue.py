@@ -221,6 +221,29 @@ def get_monitoring_queue(
     return results
 
 
+@router.get("/queue/strikes")
+def list_strikes(
+    hash: str | None = Query(None, description="Filter by download hash"),
+    db: Session = Depends(get_db),
+):
+    """All active strikes in the DB, optionally filtered by download hash."""
+    q = db.query(DownloadStrike)
+    if hash:
+        q = q.filter(DownloadStrike.download_hash == hash.lower())
+    items = q.order_by(DownloadStrike.last_seen_at.desc()).all()
+    return [
+        {
+            "download_hash": s.download_hash,
+            "instance_name": s.instance_name,
+            "error_type": s.error_type,
+            "strike_count": s.strike_count,
+            "first_seen_at": s.first_seen_at.isoformat() if s.first_seen_at else None,
+            "last_seen_at": s.last_seen_at.isoformat() if s.last_seen_at else None,
+        }
+        for s in items
+    ]
+
+
 @router.get("/queue/rdt-torrents")
 def get_rdt_torrents(db: Session = Depends(get_db)):
     """Raw RDT torrent list for debugging."""

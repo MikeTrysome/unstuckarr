@@ -20,6 +20,7 @@ _VALID_ACTIONS = {"removed", "dry_run", "skipped", "error"}
 def list_events(
     instance: str | None = Query(None),
     action: str | None = Query(None),
+    download_hash: str | None = Query(None),
     from_dt: datetime | None = Query(None, alias="from"),
     to_dt: datetime | None = Query(None, alias="to"),
     page: int = Query(1, ge=1),
@@ -40,6 +41,8 @@ def list_events(
         q = q.filter(CleanupEvent.timestamp >= from_dt)
     if to_dt:
         q = q.filter(CleanupEvent.timestamp <= to_dt)
+    if download_hash:
+        q = q.filter(CleanupEvent.download_hash == download_hash.lower())
 
     total = q.count()
     items = (
