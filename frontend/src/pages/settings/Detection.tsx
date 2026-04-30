@@ -98,6 +98,11 @@ export default function Detection() {
       label: 'Slow download',
       desc: `below ${val('detection_slow_speed_threshold_kb')} KB/s — removed after ${val('strikes_slow_threshold')} strike(s), strikes auto-clear on recovery`,
     }] : []),
+    {
+      color: 'bg-orange-400',
+      label: 'Stalled (0 seeders)',
+      desc: `after ${val('detection_stalled_min_age_minutes')} min grace period — removed after ${val('strikes_stalled_threshold')} strike(s)`,
+    },
   ]
 
   return (
@@ -318,6 +323,37 @@ export default function Detection() {
         <p className="text-xs text-slate-500 pt-2 pb-1">
           Strikes are automatically cleared when a download's speed recovers above the threshold — no manual action needed.
         </p>
+      </SectionCard>
+
+      <SectionCard title="Stalled download detection">
+        <p className="text-xs text-slate-500 pb-3 pt-1">
+          Detects torrents that RD cannot download because there are 0 seeders and no cached copy. Always active — configure the grace period and strike threshold below.
+        </p>
+
+        <div className="flex items-center justify-between py-2.5 border-b border-[var(--bd)] gap-4">
+          <div className="flex items-center gap-1.5">
+            <span className="text-sm text-slate-400">Grace period (min)</span>
+            <Tip text="A torrent must have 0 seeders for at least this many minutes before the first strike is issued. Prevents acting on brief seeder gaps." />
+          </div>
+          <Stepper
+            value={val('detection_stalled_min_age_minutes') as number}
+            min={1} step={5}
+            onChange={(v) => setVal('detection_stalled_min_age_minutes', v as never)}
+            suffix="min"
+          />
+        </div>
+
+        <div className="flex items-center justify-between py-2.5 border-b border-[var(--bd)] last:border-0 gap-4">
+          <div className="flex items-center gap-1.5">
+            <span className="text-sm text-slate-400">Max Strikes</span>
+            <Tip text="Number of consecutive stalled detections before the download is removed and re-queued. With a 5-minute interval and 3 strikes, removal happens after ~15 minutes of being stalled." />
+          </div>
+          <Stepper
+            value={val('strikes_stalled_threshold') as number}
+            min={1} step={1}
+            onChange={(v) => setVal('strikes_stalled_threshold', v as never)}
+          />
+        </div>
       </SectionCard>
 
       <div>

@@ -121,6 +121,8 @@ export interface DbConfig {
   detection_slow_min_completion_pct: number
   detection_slow_max_completion_pct: number
   strikes_slow_threshold: number
+  detection_stalled_min_age_minutes: number
+  strikes_stalled_threshold: number
 }
 
 export interface ConnectionConfig {

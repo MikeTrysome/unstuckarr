@@ -90,6 +90,8 @@ def _build_db_out(db: Session) -> DbConfigOut:
         detection_slow_min_completion_pct=cfg["detection.slow_min_completion_pct"],
         detection_slow_max_completion_pct=cfg["detection.slow_max_completion_pct"],
         strikes_slow_threshold=cfg["strikes.slow_threshold"],
+        detection_stalled_min_age_minutes=cfg["detection.stalled_min_age_minutes"],
+        strikes_stalled_threshold=cfg["strikes.stalled_threshold"],
     )
 
 
@@ -197,6 +199,10 @@ def update_config(body: FullConfigIn, db: Session = Depends(get_db)):
             updates["detection.slow_max_completion_pct"] = d.detection_slow_max_completion_pct
         if d.strikes_slow_threshold is not None:
             updates["strikes.slow_threshold"] = d.strikes_slow_threshold
+        if d.detection_stalled_min_age_minutes is not None:
+            updates["detection.stalled_min_age_minutes"] = d.detection_stalled_min_age_minutes
+        if d.strikes_stalled_threshold is not None:
+            updates["strikes.stalled_threshold"] = d.strikes_stalled_threshold
         if updates:
             db_config.update_many(db, updates)
             if "scheduler.interval_minutes" in updates:
