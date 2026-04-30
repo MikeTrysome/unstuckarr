@@ -103,6 +103,15 @@ class RdtAdapter(DownloadClientAdapter):
             except Exception:
                 pass
 
+        # Parse completed_at — set by RDT-client after both download and unpack finish
+        completed_at = None
+        raw_completed = raw.get("completed") or raw.get("Completed")
+        if raw_completed:
+            try:
+                completed_at = datetime.datetime.fromisoformat(str(raw_completed).replace("Z", "+00:00"))
+            except Exception:
+                pass
+
         retry_count = int(raw.get("retryCount") or raw.get("RetryCount") or 0)
 
         raw_speed = (
@@ -121,6 +130,7 @@ class RdtAdapter(DownloadClientAdapter):
             status=str(raw.get("status") or raw.get("Status") or ""),
             error=error if error else None,
             added_at=added_at,
+            completed_at=completed_at,
             retry_count=retry_count,
             speed_bytes=speed_bytes,
             rdt_id=rdt_id,

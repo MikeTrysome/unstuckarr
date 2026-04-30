@@ -10,6 +10,7 @@ class TorrentInfo(BaseModel):
     status: str
     error: str | None = None
     added_at: datetime | None = None
+    completed_at: datetime | None = None  # set by RDT-client after download + unpack finish
     retry_count: int = 0
     speed_bytes: int | None = None
     rdt_id: str | None = None

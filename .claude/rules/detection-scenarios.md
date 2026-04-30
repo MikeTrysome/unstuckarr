@@ -147,8 +147,10 @@ When RDT-client reports a torrent to ARR via qBittorrent API:
 **Detection function:** `is_import_pending_stuck()`
 
 **Config keys:**
-- `detection.import_pending_min_age_minutes` (default: 15) — buffer for slow disk writes
-- `strikes.import_pending_threshold` (default: 1 — remove immediately, file presence is deterministic)
+- `strikes.import_pending_threshold` (default: 2)
+- `detection.import_pending_min_age_minutes` — not used when strikes are enabled; timing is provided by the strike system instead
+
+**Timing mechanism:** ARR provides no "importPending since" timestamp. The strike system provides this implicitly: strike 1 timestamp = first detection of importPending state. Strike 2 = item was still stuck after one full run interval (~10 min) → remove. This is accurate to the actual importPending duration, unlike using `added` which reflects when the release was grabbed (potentially hours earlier).
 
 **Resolution:** Remove from ARR queue + blocklist → ARR triggers `autoRedownloadFailed` → searches next release. No soft retry (file is either there or it isn't).
 
@@ -201,7 +203,7 @@ Suggested threshold: 3 strikes, age > 60 minutes.
 | `task_canceled` | 3 | Yes (RDT retry each strike) |
 | `other` | 3 | No |
 | `slow_download` | 3 | No (auto-clears if speed recovers) |
-| `import_pending` | 1 | No |
+| `import_pending` | 2 | No |
 | `seeder_download` | 3 (proposed) | No |
 
 Each strike = one Unstuckarr run detecting the item. Strikes are per `(download_hash, instance_name)`.

@@ -28,7 +28,7 @@ class DetectionConfig:
     slow_speed_min_age_minutes: int = 10
     slow_min_completion_pct: int = 0
     slow_max_completion_pct: int = 95
-    import_pending_min_age_minutes: int = 15
+    import_pending_min_age_minutes: int = 0  # unused when strikes enabled — threshold=2 provides the delay
 
 
 @dataclass
@@ -220,8 +220,18 @@ def find_stuck_items(
         if not is_import_pending_stuck(item):
             continue
 
-        if _arr_age_minutes(item) < config.import_pending_min_age_minutes:
+        download_id = (item.get("downloadId") or "").lower()
+        rdt_torrent = rdt_index.get(download_id) if rdt_index else None
+
+        # If RDT knows this torrent but completed_at is None, the download/unpack
+        # is still in progress on the RDT side — skip to avoid acting too early.
+        # (completed_at is set by RDT-client only after both download AND unpack finish.)
+        if rdt_torrent is not None and rdt_torrent.completed_at is None:
             continue
+
+        # No age check here — timing is handled by the strike system (threshold=2).
+        # Strike 1 timestamp = first detection of importPending state.
+        # Strike 2 = item was still stuck after one full run interval (~10 min) → remove.
 
         # Extract the status message for logging
         error_msg = next(
@@ -234,10 +244,9 @@ def find_stuck_items(
             "No files found eligible for import",
         )
 
-        download_id = (item.get("downloadId") or "").lower()
         results.append(StuckItem(
             arr_item=item,
-            rdt_torrent=rdt_index.get(download_id) if rdt_index else None,
+            rdt_torrent=rdt_torrent,
             error_type="import_pending",
             error_message=error_msg,
         ))

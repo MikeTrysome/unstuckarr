@@ -37,7 +37,7 @@ DEFAULTS: dict[str, Any] = {
     "strikes.infringing_threshold": 1,        # remove immediately on first strike
     "strikes.canceled_threshold": 3,          # require 3 strikes before removing
     "strikes.slow_threshold": 3,              # require 3 strikes for slow downloads
-    "strikes.import_pending_threshold": 1,    # remove immediately — file is either there or it isn't
+    "strikes.import_pending_threshold": 2,    # 2 strikes = ~1 run interval after first detection
     "detection.slow_speed_enabled": False,
     "detection.slow_speed_threshold_kb": 500,
     "detection.slow_speed_min_age_minutes": 10,
