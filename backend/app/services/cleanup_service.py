@@ -69,6 +69,8 @@ def _get_strike_threshold(db: Session, error_type: str) -> int:
         return db_config.get(db, "strikes.infringing_threshold")
     if error_type == "slow_download":
         return db_config.get(db, "strikes.slow_threshold")
+    if error_type == "import_pending":
+        return db_config.get(db, "strikes.import_pending_threshold")
     return db_config.get(db, "strikes.canceled_threshold")
 
 
@@ -82,6 +84,7 @@ def _build_detection_config(db: Session) -> DetectionConfig:
         slow_speed_min_age_minutes=db_config.get(db, "detection.slow_speed_min_age_minutes"),
         slow_min_completion_pct=db_config.get(db, "detection.slow_min_completion_pct"),
         slow_max_completion_pct=db_config.get(db, "detection.slow_max_completion_pct"),
+        import_pending_min_age_minutes=db_config.get(db, "detection.import_pending_min_age_minutes"),
     )
 
 

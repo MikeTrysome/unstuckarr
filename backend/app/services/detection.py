@@ -28,6 +28,7 @@ class DetectionConfig:
     slow_speed_min_age_minutes: int = 10
     slow_min_completion_pct: int = 0
     slow_max_completion_pct: int = 95
+    import_pending_min_age_minutes: int = 15
 
 
 @dataclass
@@ -46,6 +47,45 @@ def is_stuck_in_arr(item: dict) -> bool:
         and not item.get("statusMessages")
         and item.get("protocol") == "torrent"
     )
+
+
+def is_import_pending_stuck(item: dict) -> bool:
+    """Download completed but no files eligible for import.
+
+    Covers: 0-byte RD deliveries, failed unpacks, files in unexpected subdirectories.
+    Unlike error-based detection, this does NOT require an RDT error — the ARR state alone
+    is sufficient. Sonarr never auto-retries importPending items; Unstuckarr must break the loop.
+    """
+    if not (
+        item.get("status") == "completed"
+        and item.get("trackedDownloadState") == "importPending"
+        and item.get("trackedDownloadStatus") == "warning"
+        and item.get("protocol") == "torrent"
+    ):
+        return False
+    for sm in item.get("statusMessages") or []:
+        for msg in sm.get("messages") or []:
+            if "no files found are eligible for import" in msg.lower():
+                return True
+    return False
+
+
+def _arr_age_minutes(
+    item: dict,
+    now: datetime.datetime | None = None,
+) -> float:
+    """Return age in minutes based on the ARR queue item's 'added' timestamp."""
+    added_str = item.get("added")
+    if not added_str:
+        return float("inf")
+    now = now or datetime.datetime.now(datetime.timezone.utc)
+    try:
+        added = datetime.datetime.fromisoformat(added_str.replace("Z", "+00:00"))
+        if added.tzinfo is None:
+            added = added.replace(tzinfo=datetime.timezone.utc)
+        return (now - added).total_seconds() / 60
+    except (ValueError, TypeError):
+        return float("inf")
 
 
 def is_slow_arr_item(item: dict) -> bool:
@@ -173,6 +213,33 @@ def find_stuck_items(
             rdt_torrent=rdt_torrent,
             error_type=error_type,
             error_message=rdt_torrent.error,
+        ))
+
+    # ── Import-pending / no eligible files detection ─────────────────────────
+    for item in arr_records:
+        if not is_import_pending_stuck(item):
+            continue
+
+        if _arr_age_minutes(item) < config.import_pending_min_age_minutes:
+            continue
+
+        # Extract the status message for logging
+        error_msg = next(
+            (
+                m
+                for sm in (item.get("statusMessages") or [])
+                for m in (sm.get("messages") or [])
+                if "no files found" in m.lower()
+            ),
+            "No files found eligible for import",
+        )
+
+        download_id = (item.get("downloadId") or "").lower()
+        results.append(StuckItem(
+            arr_item=item,
+            rdt_torrent=rdt_index.get(download_id) if rdt_index else None,
+            error_type="import_pending",
+            error_message=error_msg,
         ))
 
     # ── Slow-speed detection ──────────────────────────────────────────────────

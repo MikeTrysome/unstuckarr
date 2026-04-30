@@ -34,14 +34,16 @@ DEFAULTS: dict[str, Any] = {
     "scheduler.interval_minutes": 10,
     "notifications.providers": [],
     "strikes.enabled": True,
-    "strikes.infringing_threshold": 1,   # remove immediately on first strike
-    "strikes.canceled_threshold": 3,     # require 3 strikes before removing
-    "strikes.slow_threshold": 3,         # require 3 strikes for slow downloads
+    "strikes.infringing_threshold": 1,        # remove immediately on first strike
+    "strikes.canceled_threshold": 3,          # require 3 strikes before removing
+    "strikes.slow_threshold": 3,              # require 3 strikes for slow downloads
+    "strikes.import_pending_threshold": 1,    # remove immediately — file is either there or it isn't
     "detection.slow_speed_enabled": False,
     "detection.slow_speed_threshold_kb": 500,
     "detection.slow_speed_min_age_minutes": 10,
     "detection.slow_min_completion_pct": 0,
     "detection.slow_max_completion_pct": 95,
+    "detection.import_pending_min_age_minutes": 15,
     # Connection config (DB-first, env var seeded on startup)
     "connection.sonarr.host": "",
     "connection.sonarr.port": 8989,
