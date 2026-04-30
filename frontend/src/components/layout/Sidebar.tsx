@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
   Activity,
@@ -68,6 +69,14 @@ function NavItem({
 export function Sidebar({ onClose }: { onClose?: () => void }) {
   const navigate = useNavigate()
   const { theme, cycle } = useTheme()
+  const [version, setVersion] = useState<string>('')
+
+  useEffect(() => {
+    fetch('/health')
+      .then((r) => r.json())
+      .then((d) => setVersion(d.version ? String(d.version).slice(0, 7) : ''))
+      .catch(() => {})
+  }, [])
 
   const handleLogout = () => {
     clearToken()
@@ -124,7 +133,7 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
           <LogOut size={16} />
           Log out
         </button>
-        <p className="text-xs text-slate-600 px-3">v0.1.0</p>
+        {version && <p className="text-xs text-slate-600 px-3 font-mono">{version}</p>}
       </div>
     </aside>
   )

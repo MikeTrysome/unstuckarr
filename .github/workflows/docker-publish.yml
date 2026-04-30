@@ -28,6 +28,7 @@ jobs:
           context: .
           push: true
           no-cache: true
+          build-args: COMMIT_SHA=${{ github.sha }}
           tags: |
             dockersftw/unstuckarr:latest
             dockersftw/unstuckarr:${{ github.sha }}

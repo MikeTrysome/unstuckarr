@@ -158,7 +158,7 @@ app.include_router(ignores.router, prefix="/api")
 
 @app.get("/health", tags=["health"])
 def health():
-    return {"status": "ok", "version": "0.2.0"}
+    return {"status": "ok", "version": os.environ.get("APP_VERSION", "dev")}
 
 
 # Serve React SPA — must be registered last

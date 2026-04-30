@@ -20,6 +20,8 @@ COPY backend/ ./
 # Copy built frontend into static/
 COPY --from=frontend-build /build/dist/ ./static/
 
+ARG COMMIT_SHA=dev
+ENV APP_VERSION=$COMMIT_SHA
 ENV UNSTUCKARR_DATA_DIR=/data
 ENV STATIC_DIR=/app/static
 
