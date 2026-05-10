@@ -5,11 +5,14 @@ import { usePolling } from '../hooks/usePolling'
 import { AlertTriangle, Eye, RefreshCw, Trash2, X } from 'lucide-react'
 
 const ERROR_LABELS: Record<string, { label: string; color: string }> = {
-  infringing_file: { label: 'Infringing file', color: 'text-red-400 bg-red-500/10 border-red-500/20' },
-  task_canceled:   { label: 'Task canceled',   color: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },
-  slow_download:   { label: 'Slow',            color: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20' },
-  arr_only:        { label: 'ARR-only',         color: 'text-slate-400 bg-white/5 border-white/10' },
-  other:           { label: 'Other',            color: 'text-slate-400 bg-white/5 border-white/10' },
+  infringing_file:   { label: 'Infringing',    color: 'text-red-400 bg-red-500/10 border-red-500/20' },
+  debrid_permanent:  { label: 'RD error',      color: 'text-red-400 bg-red-500/10 border-red-500/20' },
+  task_canceled:     { label: 'Task canceled', color: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },
+  slow_download:     { label: 'Slow',          color: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20' },
+  stalled:           { label: 'Stalled',       color: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },
+  import_pending:    { label: 'Import stuck',  color: 'text-orange-400 bg-orange-500/10 border-orange-500/20' },
+  arr_only:          { label: 'ARR-only',      color: 'text-slate-400 bg-white/5 border-white/10' },
+  other:             { label: 'Other',         color: 'text-slate-400 bg-white/5 border-white/10' },
 }
 
 const INSTANCES = ['Sonarr', 'Sonarr-4K', 'Radarr', 'Radarr-4K']

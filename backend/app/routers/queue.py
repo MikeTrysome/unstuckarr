@@ -16,6 +16,27 @@ from app.services.arr_service import ArrService
 from app.services.detection import DetectionConfig, find_stuck_items
 
 
+def _display_title(arr_item: dict) -> str:
+    """Build a human-readable title from series/episode or movie info."""
+    # Sonarr
+    series = arr_item.get("series") or {}
+    episode = arr_item.get("episode") or {}
+    if series.get("title"):
+        season  = episode.get("seasonNumber")
+        ep_num  = episode.get("episodeNumber")
+        ep_code = f" S{season:02d}E{ep_num:02d}" if season is not None and ep_num is not None else ""
+        ep_title = episode.get("title") or ""
+        suffix = f" · {ep_title}" if ep_title else ""
+        return f"{series['title']}{ep_code}{suffix}"
+    # Radarr
+    movie = arr_item.get("movie") or {}
+    if movie.get("title"):
+        year = movie.get("year")
+        return f"{movie['title']} ({year})" if year else movie["title"]
+    # Fallback to download title
+    return arr_item.get("title") or "?"
+
+
 def _get_ignored_hashes(db: Session) -> set[str]:
     now = datetime.now(timezone.utc)
     return {
@@ -118,7 +139,7 @@ def get_stuck_queue(
 
             results.append(StuckItemOut(
                 arr_queue_id=s.arr_item.get("id"),
-                title=s.arr_item.get("title", "?"),
+                title=_display_title(s.arr_item),
                 instance_name=inst.name,
                 download_hash=hash_,
                 error_type=s.error_type,
@@ -215,7 +236,7 @@ def get_monitoring_queue(
 
             results.append(MonitoringItemOut(
                 arr_queue_id=item.get("id"),
-                title=item.get("title", "?"),
+                title=_display_title(item),
                 instance_name=inst.name,
                 download_hash=hash_,
                 arr_error_message=item.get("errorMessage"),
