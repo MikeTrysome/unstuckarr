@@ -30,7 +30,8 @@ jobs:
             VERSION="${GITHUB_REF#refs/tags/v}"
             TAGS="dockersftw/unstuckarr:latest,dockersftw/unstuckarr:${VERSION}"
           else
-            VERSION="dev"
+            SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+            VERSION="dev-${SHORT_SHA}"
             TAGS="dockersftw/unstuckarr:latest,dockersftw/unstuckarr:${{ github.sha }}"
           fi
           echo "version=${VERSION}" >> $GITHUB_OUTPUT

@@ -84,10 +84,12 @@ def get_stuck_queue(
             continue
 
         # Resolve strike thresholds once per instance loop
-        infringing_threshold = db_config.get(db, "strikes.infringing_threshold")
-        canceled_threshold   = db_config.get(db, "strikes.canceled_threshold")
-        slow_threshold       = db_config.get(db, "strikes.slow_threshold")
-        stalled_threshold    = db_config.get(db, "strikes.stalled_threshold")
+        infringing_threshold        = db_config.get(db, "strikes.infringing_threshold")
+        debrid_permanent_threshold  = db_config.get(db, "strikes.debrid_permanent_threshold")
+        canceled_threshold          = db_config.get(db, "strikes.canceled_threshold")
+        slow_threshold              = db_config.get(db, "strikes.slow_threshold")
+        stalled_threshold           = db_config.get(db, "strikes.stalled_threshold")
+        import_pending_threshold    = db_config.get(db, "strikes.import_pending_threshold")
 
         stuck = find_stuck_items(records, rdt_index, use_rdt, detection_cfg)
         for s in stuck:
@@ -106,9 +108,11 @@ def get_stuck_queue(
                     strike_count = strike_row.strike_count
 
             threshold = (
-                infringing_threshold if s.error_type == "infringing_file"
-                else slow_threshold if s.error_type == "slow_download"
-                else stalled_threshold if s.error_type == "stalled"
+                infringing_threshold       if s.error_type == "infringing_file"
+                else debrid_permanent_threshold if s.error_type == "debrid_permanent"
+                else slow_threshold        if s.error_type == "slow_download"
+                else stalled_threshold     if s.error_type == "stalled"
+                else import_pending_threshold if s.error_type == "import_pending"
                 else canceled_threshold
             )
 

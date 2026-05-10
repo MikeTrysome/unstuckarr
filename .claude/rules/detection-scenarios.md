@@ -170,7 +170,7 @@ When RDT-client reports a torrent to ARR via qBittorrent API:
 | ARR | `trackedDownloadState` | `"downloading"` |
 | ARR | `statusMessages` | `[]` (empty) |
 | ARR | `protocol` | `"torrent"` |
-| RDT | `error` | contains `"magnet_error"`, `"magnet error"`, `"virus"`, or `"dead"` |
+| RDT | `error` | contains `"magnet_error"` (exact: `"Debrid error: magnet_error."`), `"magnet error"`, `"virus"`, or `"dead"` |
 
 **Detection function:** `is_stuck_in_arr()` + `classify_error()` → `"debrid_permanent"`
 
@@ -191,6 +191,8 @@ With Unstuckarr at 5 min and `deleteOnError` at 7 min: Unstuckarr catches the er
 - `dead` — no seeders available on RD side (permanent for this torrent)
 
 **Canonical source:** Real-Debrid API `/torrents/info/{id}` status enum + RDT-client TorrentRunner.cs
+
+**Diepere reden beschikbaar?** Nee. `magnet_error` komt via status polling (niet AddMagnetAsync), dus er is geen RDNET exception en geen log entry. RD geeft alleen `rdStatusRaw: "magnet_error"` en `rdName: "Invalid Magnet"`. Geen sub-code, geen reden. Patroon matchen op de string is het maximum haalbare.
 
 **Real-world example:** Goliath S01E02 (2026-05-10) — BRiNK release, hash `6B2FD0B01877D127E7C0F49F31836B1132801668`, RD returned `magnet_error`, RDT deleted after 5 min, Sonarr never notified, user kept manually grabbing the same broken release.
 
