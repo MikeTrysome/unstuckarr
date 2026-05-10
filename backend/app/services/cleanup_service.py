@@ -67,6 +67,8 @@ def _delete_strike(db: Session, download_hash: str, instance_name: str) -> None:
 def _get_strike_threshold(db: Session, error_type: str) -> int:
     if error_type == "infringing_file":
         return db_config.get(db, "strikes.infringing_threshold")
+    if error_type == "debrid_permanent":
+        return db_config.get(db, "strikes.debrid_permanent_threshold")
     if error_type == "slow_download":
         return db_config.get(db, "strikes.slow_threshold")
     if error_type == "stalled":
@@ -80,6 +82,7 @@ def _build_detection_config(db: Session) -> DetectionConfig:
     return DetectionConfig(
         infringing_min_age_minutes=db_config.get(db, "detection.infringing_min_age_minutes"),
         canceled_min_age_minutes=db_config.get(db, "detection.canceled_min_age_minutes"),
+        debrid_permanent_min_age_minutes=db_config.get(db, "detection.debrid_permanent_min_age_minutes"),
         min_retry_count=db_config.get(db, "detection.min_retry_count"),
         slow_speed_enabled=db_config.get(db, "detection.slow_speed_enabled"),
         slow_speed_threshold_kb=db_config.get(db, "detection.slow_speed_threshold_kb"),

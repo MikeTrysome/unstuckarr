@@ -34,11 +34,12 @@ DEFAULTS: dict[str, Any] = {
     "scheduler.interval_minutes": 10,
     "notifications.providers": [],
     "strikes.enabled": True,
-    "strikes.infringing_threshold": 1,        # remove immediately on first strike
-    "strikes.canceled_threshold": 3,          # require 3 strikes before removing
-    "strikes.slow_threshold": 3,              # require 3 strikes for slow downloads
-    "strikes.stalled_threshold": 3,           # require 3 strikes for stalled (0 seeders) downloads
-    "strikes.import_pending_threshold": 2,    # 2 strikes = ~1 run interval after first detection
+    "strikes.infringing_threshold": 1,           # remove immediately on first strike
+    "strikes.canceled_threshold": 3,             # require 3 strikes before removing
+    "strikes.slow_threshold": 3,                 # require 3 strikes for slow downloads
+    "strikes.stalled_threshold": 3,              # require 3 strikes for stalled (0 seeders) downloads
+    "strikes.import_pending_threshold": 2,       # 2 strikes = ~1 run interval after first detection
+    "strikes.debrid_permanent_threshold": 1,     # permanent RD error (magnet_error, virus, dead) — remove immediately
     "detection.slow_speed_enabled": False,
     "detection.slow_speed_threshold_kb": 500,
     "detection.slow_speed_min_age_minutes": 10,
@@ -46,6 +47,7 @@ DEFAULTS: dict[str, Any] = {
     "detection.slow_max_completion_pct": 95,
     "detection.import_pending_min_age_minutes": 15,
     "detection.stalled_min_age_minutes": 30,
+    "detection.debrid_permanent_min_age_minutes": 0,  # act on first run — no grace period for permanent errors
     # Connection config (DB-first, env var seeded on startup)
     "connection.sonarr.host": "",
     "connection.sonarr.port": 8989,

@@ -17,6 +17,7 @@ if TYPE_CHECKING:
 class DetectionConfig:
     infringing_min_age_minutes: int = 15
     canceled_min_age_minutes: int = 30
+    debrid_permanent_min_age_minutes: int = 0  # permanent RD errors act immediately
     min_retry_count: int = 1
     error_patterns: tuple[str, ...] = (
         "infringing file",
@@ -104,6 +105,14 @@ def classify_error(error: str) -> str:
         return "infringing_file"
     if "task was canceled" in error_lower:
         return "task_canceled"
+    # Permanent RD errors — no recovery possible, remove immediately (threshold=1)
+    # Sources: RD API status enum (magnet_error, virus, dead) as reported by RDT-client
+    if "magnet_error" in error_lower or "magnet error" in error_lower:
+        return "debrid_permanent"
+    if "virus" in error_lower:
+        return "debrid_permanent"
+    if "dead" in error_lower:
+        return "debrid_permanent"
     return "other"
 
 
@@ -127,11 +136,12 @@ def passes_age_check(
     now: datetime.datetime | None = None,
 ) -> bool:
     """Returns True if the torrent is old enough to act on (error-based detection)."""
-    min_age = (
-        config.infringing_min_age_minutes
-        if error_type == "infringing_file"
-        else config.canceled_min_age_minutes
-    )
+    if error_type == "infringing_file":
+        min_age = config.infringing_min_age_minutes
+    elif error_type == "debrid_permanent":
+        min_age = config.debrid_permanent_min_age_minutes
+    else:
+        min_age = config.canceled_min_age_minutes
     return _age_minutes(torrent, now) >= min_age
 
 
@@ -206,7 +216,8 @@ def find_stuck_items(
         if not passes_age_check(rdt_torrent, error_type, config):
             continue
 
-        if not passes_retry_check(rdt_torrent, config):
+        # Permanent RD errors won't be retried by RDT — skip retry count check
+        if error_type != "debrid_permanent" and not passes_retry_check(rdt_torrent, config):
             continue
 
         results.append(StuckItem(

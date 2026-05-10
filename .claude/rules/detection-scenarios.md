@@ -160,6 +160,42 @@ When RDT-client reports a torrent to ARR via qBittorrent API:
 
 ---
 
+## Detection scenario 6 — Permanent RD error (magnet_error, virus, dead) *(added 2026-05-10)*
+
+**Trigger in stack:** Real-Debrid returns a permanent, non-recoverable error. RDT-client sets the error field and schedules the torrent for deletion via `deleteOnError`. Without intervention, Sonarr/Radarr never receive a failure callback and never blocklist or re-search.
+
+| Layer | Property | Value |
+|-------|----------|-------|
+| ARR | `status` | `"warning"` |
+| ARR | `trackedDownloadState` | `"downloading"` |
+| ARR | `statusMessages` | `[]` (empty) |
+| ARR | `protocol` | `"torrent"` |
+| RDT | `error` | contains `"magnet_error"`, `"magnet error"`, `"virus"`, or `"dead"` |
+
+**Detection function:** `is_stuck_in_arr()` + `classify_error()` → `"debrid_permanent"`
+
+**Config keys:**
+- `strikes.debrid_permanent_threshold` (default: 1 — remove on first strike)
+- `detection.debrid_permanent_min_age_minutes` (default: 0 — no grace period, act immediately)
+
+**Retry check:** bypassed — RDT-client does not retry permanent RD errors.
+
+**Resolution:** Remove from ARR queue + blocklist → ARR triggers `autoRedownloadFailed` → searches next release.
+
+**Timing:** Requires `deleteOnError` in RDT-client to be set **above** the Unstuckarr scheduler interval.
+With Unstuckarr at 5 min and `deleteOnError` at 7 min: Unstuckarr catches the error at t=5, acts at t=5, RDT deletes at t=7 (after Unstuckarr already handled it).
+
+**RD error sources:**
+- `magnet_error` — magnet link cannot be processed by RD (permanent)
+- `virus` — RD flagged the torrent as containing a virus (permanent)
+- `dead` — no seeders available on RD side (permanent for this torrent)
+
+**Canonical source:** Real-Debrid API `/torrents/info/{id}` status enum + RDT-client TorrentRunner.cs
+
+**Real-world example:** Goliath S01E02 (2026-05-10) — BRiNK release, hash `6B2FD0B01877D127E7C0F49F31836B1132801668`, RD returned `magnet_error`, RDT deleted after 5 min, Sonarr never notified, user kept manually grabbing the same broken release.
+
+---
+
 ## Known detection gap — Non-cached torrent downloading via RD P2P
 
 **NOT currently detected.** Documented here for future implementation.
@@ -200,6 +236,7 @@ Suggested threshold: 3 strikes, age > 60 minutes.
 | Error type | Threshold | Soft retry |
 |------------|-----------|------------|
 | `infringing_file` | 1 | No |
+| `debrid_permanent` | 1 | No |
 | `task_canceled` | 3 | Yes (RDT retry each strike) |
 | `other` | 3 | No |
 | `slow_download` | 3 | No (auto-clears if speed recovers) |
