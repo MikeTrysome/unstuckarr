@@ -99,6 +99,11 @@ def is_slow_arr_item(item: dict) -> bool:
     )
 
 
+def error_priority(error_type: str) -> int:
+    """Higher = more severe/permanent. Used to prevent downgrading a stored error type."""
+    return {"infringing_file": 2, "debrid_permanent": 2}.get(error_type, 0)
+
+
 def classify_error(error: str) -> str:
     error_lower = error.lower()
     if "infringing" in error_lower:
@@ -212,6 +217,17 @@ def find_stuck_items(
             continue  # ARR warning but no RDT error → skip
 
         error_type = classify_error(rdt_torrent.error)
+
+        # task_canceled with all torrent retries exhausted is effectively permanent:
+        # RDT won't attempt again, and oscillation with infringing_file confirms RD
+        # is permanently rejecting this torrent.
+        if (
+            error_type == "task_canceled"
+            and rdt_torrent.torrent_retry_attempts is not None
+            and rdt_torrent.torrent_retry_attempts > 0
+            and rdt_torrent.retry_count >= rdt_torrent.torrent_retry_attempts
+        ):
+            error_type = "debrid_permanent"
 
         if not passes_age_check(rdt_torrent, error_type, config):
             continue

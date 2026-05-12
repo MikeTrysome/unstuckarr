@@ -13,7 +13,7 @@ from app.models.strike import DownloadStrike
 from app.schemas.queue import MonitoringItemOut, StuckItemOut
 from app.services import db_config
 from app.services.arr_service import ArrService
-from app.services.detection import DetectionConfig, find_stuck_items
+from app.services.detection import DetectionConfig, error_priority, find_stuck_items
 
 
 def _display_title(arr_item: dict) -> str:
@@ -119,7 +119,7 @@ def get_stuck_queue(
             if hash_ and hash_ in ignored_hashes:
                 continue
 
-            # Look up current strike count
+            # Look up current strike count and worst-seen error type
             strike_count = 0
             if hash_:
                 strike_row = db.query(DownloadStrike).filter_by(
@@ -128,12 +128,22 @@ def get_stuck_queue(
                 if strike_row:
                     strike_count = strike_row.strike_count
 
+            # Use whichever error type is more severe: current (from RDT) or stored (from DB).
+            # This ensures the displayed threshold reflects permanent-error escalation even
+            # when the RDT error is oscillating back to a lower-severity type.
+            stored_type = strike_row.error_type if (hash_ and strike_row) else s.error_type
+            effective_error_type = (
+                s.error_type
+                if error_priority(s.error_type) >= error_priority(stored_type)
+                else stored_type
+            )
+
             threshold = (
-                infringing_threshold       if s.error_type == "infringing_file"
-                else debrid_permanent_threshold if s.error_type == "debrid_permanent"
-                else slow_threshold        if s.error_type == "slow_download"
-                else stalled_threshold     if s.error_type == "stalled"
-                else import_pending_threshold if s.error_type == "import_pending"
+                infringing_threshold       if effective_error_type == "infringing_file"
+                else debrid_permanent_threshold if effective_error_type == "debrid_permanent"
+                else slow_threshold        if effective_error_type == "slow_download"
+                else stalled_threshold     if effective_error_type == "stalled"
+                else import_pending_threshold if effective_error_type == "import_pending"
                 else canceled_threshold
             )
 

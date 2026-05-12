@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { api } from '../lib/api'
 import type { EventListResponse } from '../types'
 import { usePolling } from '../hooks/usePolling'
@@ -20,7 +20,7 @@ export default function Events() {
   const [filterInstance, setFilterInstance] = useState('')
   const [filterAction, setFilterAction] = useState('')
 
-  const load = async () => {
+  const load = useCallback(async () => {
     const res = await api.events.list({
       instance: filterInstance || undefined,
       action: filterAction || undefined,
@@ -28,9 +28,12 @@ export default function Events() {
       page_size: 50,
     }).catch(() => null)
     if (res) setData(res)
-  }
+  }, [page, filterInstance, filterAction])
 
   usePolling(load, 30_000)
+
+  // Reload immediately when page or filters change
+  useEffect(() => { load() }, [load])
 
   const totalPages = data ? Math.ceil(data.total / 50) : 1
 

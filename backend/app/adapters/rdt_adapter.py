@@ -114,6 +114,9 @@ class RdtAdapter(DownloadClientAdapter):
 
         retry_count = int(raw.get("retryCount") or raw.get("RetryCount") or 0)
 
+        raw_torrent_retry = raw.get("torrentRetryAttempts") or raw.get("TorrentRetryAttempts")
+        torrent_retry_attempts = int(raw_torrent_retry) if raw_torrent_retry is not None else None
+
         raw_speed = (
             raw.get("rdSpeed")
             or raw.get("speed")
@@ -135,6 +138,7 @@ class RdtAdapter(DownloadClientAdapter):
             added_at=added_at,
             completed_at=completed_at,
             retry_count=retry_count,
+            torrent_retry_attempts=torrent_retry_attempts,
             speed_bytes=speed_bytes,
             rd_seeders=rd_seeders,
             rdt_id=rdt_id,

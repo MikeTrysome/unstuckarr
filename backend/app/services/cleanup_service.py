@@ -20,6 +20,7 @@ from app.services import db_config
 from app.services.arr_service import ArrService
 from app.services.detection import (
     DetectionConfig,
+    error_priority,
     find_stuck_items,
     is_below_speed_threshold,
 )
@@ -35,8 +36,16 @@ def _log(level: str, msg: str, run_id: str | None = None):
     broadcaster.emit_sync(level, msg, run_id=run_id)
 
 
-def _increment_strike(db: Session, download_hash: str, instance_name: str, error_type: str) -> int:
-    """Increment (or create) the strike counter for a download. Returns new count."""
+def _increment_strike(
+    db: Session, download_hash: str, instance_name: str, error_type: str
+) -> tuple[int, str]:
+    """Increment (or create) the strike counter for a download.
+
+    Returns (new_count, effective_error_type). The stored error_type only upgrades
+    to a higher-priority type (infringing_file, debrid_permanent) — never downgrades.
+    This prevents oscillating RD errors (task_canceled ↔ infringing_file) from
+    resetting the permanent-error classification.
+    """
     strike = db.query(DownloadStrike).filter_by(
         download_hash=download_hash, instance_name=instance_name
     ).first()
@@ -51,9 +60,10 @@ def _increment_strike(db: Session, download_hash: str, instance_name: str, error
     else:
         strike.strike_count += 1
         strike.last_seen_at = _utcnow()
-        strike.error_type = error_type
+        if error_priority(error_type) > error_priority(strike.error_type):
+            strike.error_type = error_type
     db.commit()
-    return strike.strike_count
+    return strike.strike_count, strike.error_type
 
 
 def _delete_strike(db: Session, download_hash: str, instance_name: str) -> None:
@@ -261,8 +271,8 @@ def run_cleanup(dry_run: bool | None = None, triggered_by: str = "scheduler") ->
                 # ── Strike logic ──────────────────────────────────────────────
                 skip_removal = False
                 if strikes_enabled and not dry_run and download_hash:
-                    strike_count = _increment_strike(db, download_hash, instance.name, stuck.error_type)
-                    threshold = _get_strike_threshold(db, stuck.error_type)
+                    strike_count, effective_error_type = _increment_strike(db, download_hash, instance.name, stuck.error_type)
+                    threshold = _get_strike_threshold(db, effective_error_type)
                     if strike_count < threshold:
                         _log(
                             "INFO",
@@ -322,7 +332,13 @@ def run_cleanup(dry_run: bool | None = None, triggered_by: str = "scheduler") ->
                             download_hash=download_hash, instance_name=instance.name
                         ).first()
                         current_count = existing.strike_count if existing else 0
-                        threshold = _get_strike_threshold(db, stuck.error_type)
+                        existing_type = existing.error_type if existing else stuck.error_type
+                        effective_dry_type = (
+                            stuck.error_type
+                            if error_priority(stuck.error_type) > error_priority(existing_type)
+                            else existing_type
+                        )
+                        threshold = _get_strike_threshold(db, effective_dry_type)
                         simulated = current_count + 1
                         if simulated >= threshold:
                             total_would_remove += 1
